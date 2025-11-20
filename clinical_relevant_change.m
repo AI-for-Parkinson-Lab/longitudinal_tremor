@@ -1,0 +1,243 @@
+%% 
+clear all; close all;
+%% Load sensor data
+load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250523_L1trend\trends2.mat')
+
+%% Load IDs
+load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250327_inclusion_exclusion\IDs.mat')
+load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250410_matching_info\IDs_BaselineMedicated_matched.mat')
+load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250523_l1trend\IDs_BaselineUnmedicated_L1trend.mat')
+load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250327_inclusion_exclusion\Inclusion.mat')
+
+%% Merge medicated and unmedicated data
+trend_tremor_time_start_medication_A = trend_tremor_time_medicated_filled(length(IDs_BaselineMedicated)+1:end,:);
+trend_tremor_time_start_medication_B = trend_tremor_time_unmedicated_filled(1:length(IDs_StartMedication),:);
+trend_tremor_time_start_medication = trend_tremor_time_start_medication_A;
+trend_tremor_time_start_medication(isnan(trend_tremor_time_start_medication_A)) = trend_tremor_time_start_medication_B(isnan(trend_tremor_time_start_medication_A));
+
+trend_median_tremor_power_start_medication_A = trend_median_tremor_power_medicated_filled(length(IDs_BaselineMedicated)+1:end,:);
+trend_median_tremor_power_start_medication_B = trend_median_tremor_power_unmedicated_filled(1:length(IDs_StartMedication),:);
+trend_median_tremor_power_start_medication = trend_median_tremor_power_start_medication_A;
+trend_median_tremor_power_start_medication(isnan(trend_median_tremor_power_start_medication_A)) = trend_median_tremor_power_start_medication_B(isnan(trend_median_tremor_power_start_medication_A));
+
+trend_modal_tremor_power_start_medication_A = trend_modal_tremor_power_medicated_filled(length(IDs_BaselineMedicated)+1:end,:);
+trend_modal_tremor_power_start_medication_B = trend_modal_tremor_power_unmedicated_filled(1:length(IDs_StartMedication),:);
+trend_modal_tremor_power_start_medication = trend_modal_tremor_power_start_medication_A;
+trend_modal_tremor_power_start_medication(isnan(trend_modal_tremor_power_start_medication_A)) = trend_modal_tremor_power_start_medication_B(isnan(trend_modal_tremor_power_start_medication_A));
+
+trend_perc90_tremor_power_start_medication_A = trend_perc90_tremor_power_medicated_filled(length(IDs_BaselineMedicated)+1:end,:);
+trend_perc90_tremor_power_start_medication_B = trend_perc90_tremor_power_unmedicated_filled(1:length(IDs_StartMedication),:);
+trend_perc90_tremor_power_start_medication = trend_perc90_tremor_power_start_medication_A;
+trend_perc90_tremor_power_start_medication(isnan(trend_perc90_tremor_power_start_medication_A)) = trend_perc90_tremor_power_start_medication_B(isnan(trend_perc90_tremor_power_start_medication_A));
+
+%% Combine and calculate 2-year delta of whole group
+
+trend_tremor_time = [trend_tremor_time_medicated_filled(1:length(IDs_BaselineMedicated),:); trend_tremor_time_start_medication; trend_tremor_time_unmedicated_filled(1+length(IDs_StartMedication):end,:)];
+delta_tremor_time = logit(trend_tremor_time(:,51)) - logit(trend_tremor_time(:,2));
+
+trend_median_tremor_power = [trend_median_tremor_power_medicated_filled(1:length(IDs_BaselineMedicated),:); trend_median_tremor_power_start_medication; trend_median_tremor_power_unmedicated_filled(1+length(IDs_StartMedication):end,:)];
+delta_median_tremor_power = trend_median_tremor_power(:,51) - trend_median_tremor_power(:,2);
+
+trend_modal_tremor_power = [trend_modal_tremor_power_medicated_filled(1:length(IDs_BaselineMedicated),:); trend_modal_tremor_power_start_medication; trend_modal_tremor_power_unmedicated_filled(1+length(IDs_StartMedication):end,:)];
+delta_modal_tremor_power = trend_modal_tremor_power(:,51) - trend_modal_tremor_power(:,2);
+
+trend_perc90_tremor_power = [trend_perc90_tremor_power_medicated_filled(1:length(IDs_BaselineMedicated),:); trend_perc90_tremor_power_start_medication; trend_perc90_tremor_power_unmedicated_filled(1+length(IDs_StartMedication):end,:)];
+delta_perc90_tremor_power = trend_perc90_tremor_power(:,51) - trend_perc90_tremor_power(:,2);
+
+%% Load clinical data
+Visit1DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit1_DeNovo.csv");
+Visit2DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit2_DeNovo.csv");
+Visit3DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit3_DeNovo.csv");
+
+Visit1PPP = readtable("C:\Users\z835211\Documents\Data\CSV files clinical and dempographic data\General_visit1.csv");
+Visit2PPP = readtable("C:\Users\z835211\Documents\Data\CSV files clinical and dempographic data\General_visit2.csv");
+Visit3PPP = readtable("C:\Users\z835211\Documents\Data\CSV files clinical and dempographic data\General_visit3.csv");
+
+% Convert IDs of PPP to same format
+ids = char(Visit1PPP.id);
+new_ids = ids(:,1:16);
+Visit1PPP.id  = cellstr(strcat(repmat('POMU',length(new_ids),1),new_ids));
+ids = char(Visit2PPP.id);
+new_ids = ids(:,1:16);
+Visit2PPP.id  = cellstr(strcat(repmat('POMU',length(new_ids),1),new_ids));
+ids = char(Visit3PPP.id);
+new_ids = ids(:,1:16);
+Visit3PPP.id  = cellstr(strcat(repmat('POMU',length(new_ids),1),new_ids));
+
+%% Extract UPDRS scores
+load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250327_inclusion_exclusion\visit_week_numbers.mat')
+
+UPDRS_317OFF_1 = [];
+UPDRS_318OFF_1 = [];
+UPDRS_210_1 = [];
+
+UPDRS_317OFF_3 = [];
+UPDRS_318OFF_3 = [];
+UPDRS_210_3 = [];
+
+UPDRS_317ON_1 = [];
+UPDRS_318ON_1 = [];
+UPDRS_317ON_3 = [];
+UPDRS_318ON_3 = [];
+
+IDs_all = [IDs_BaselineMedicated; IDs_StartMedication; IDs_AllUnmedicated];
+
+for i = 1:length(IDs_all)
+    id = IDs_all{i};
+
+    if ~isempty(find(contains(Visit1PPP.id,id)))
+
+        UPDRS_317OFF_1(i) = Visit1PPP.Up3OfRAmpArmYesDev(contains(Visit1PPP.id,id));
+        UPDRS_318OFF_1(i) = Visit1PPP.Up3OfConstan(contains(Visit1PPP.id,id));
+        UPDRS_210_1(i) = Visit1PPP.Updrs2It23(contains(Visit1PPP.id,id));
+
+        UPDRS_317ON_1(i) = Visit1PPP.Up3OnRAmpArmYesDev(contains(Visit1PPP.id,id));
+        UPDRS_318ON_1(i) = Visit1PPP.Up3OnConstan(contains(Visit1PPP.id,id));
+
+        if ~isempty(find(contains(Visit3PPP.id,id)))
+            visit3_week_number = cell2mat(visit_week_numbers.visit3(contains(visit_week_numbers.ID,id)));
+            if visit3_week_number <= 120
+                UPDRS_317OFF_3(i) = Visit3PPP.Up3OfRAmpArmYesDev(contains(Visit3PPP.id,id));
+                UPDRS_318OFF_3(i) = Visit3PPP.Up3OfConstan(contains(Visit3PPP.id,id));
+                UPDRS_210_3(i) = Visit3PPP.Updrs2It23(contains(Visit3PPP.id,id));
+
+                UPDRS_317ON_3(i) = Visit3PPP.Up3OnRAmpArmYesDev(contains(Visit3PPP.id,id));
+                UPDRS_318ON_3(i) = Visit3PPP.Up3OnConstan(contains(Visit3PPP.id,id));
+            else
+                UPDRS_317OFF_3(i) = NaN;
+                UPDRS_318OFF_3(i) = NaN;
+                UPDRS_210_3(i) = NaN;
+            end
+        else
+            UPDRS_317OFF_3(i) = NaN;
+            UPDRS_318OFF_3(i) = NaN;
+            UPDRS_210_3(i) = NaN;
+        end
+
+    else
+        UPDRS_317OFF_1(i) = Visit1DeNovo.Up3OfRAmpArmYesDev(contains(Visit1DeNovo.id,id));
+        UPDRS_318OFF_1(i) = Visit1DeNovo.Up3OfConstan(contains(Visit1DeNovo.id,id));
+        UPDRS_210_1(i) = Visit1DeNovo.Updrs2It23(contains(Visit1DeNovo.id,id));
+        UPDRS_317ON_1(i) =  NaN;
+        UPDRS_318ON_1(i) =  NaN;
+        UPDRS_317ON_3(i) =  NaN;
+        UPDRS_318ON_3(i) =  NaN;
+
+        if contains(id,'POMU600C11F136E6FB4D')
+
+            UPDRS_317OFF_3(i) = Visit2DeNovo.Up3OfRAmpArmYesDev(contains(Visit2DeNovo.id,id));
+            UPDRS_318OFF_3(i) = Visit2DeNovo.Up3OfConstan(contains(Visit2DeNovo.id,id));
+            UPDRS_210_3(i) = Visit2DeNovo.Updrs2It23(contains(Visit2DeNovo.id,id));
+
+
+        else
+            if ~isempty(find(contains(Visit3DeNovo.id,id)))
+                visit3_week_number = cell2mat(visit_week_numbers.visit3(contains(visit_week_numbers.ID,id)));
+                if visit3_week_number <= 120
+                    UPDRS_317OFF_3(i) = Visit3DeNovo.Up3OfRAmpArmYesDev(contains(Visit3DeNovo.id,id));
+                    UPDRS_318OFF_3(i) = Visit3DeNovo.Up3OfConstan(contains(Visit3DeNovo.id,id));
+                    UPDRS_210_3(i) = Visit3DeNovo.Updrs2It23(contains(Visit3DeNovo.id,id));
+                else
+                    UPDRS_317OFF_3(i) = NaN;
+                    UPDRS_318OFF_3(i) = NaN;
+                    UPDRS_210_3(i) = NaN;
+
+                end
+            else
+                UPDRS_317OFF_3(i) = NaN;
+                UPDRS_318OFF_3(i) = NaN;
+                UPDRS_210_3(i) = NaN;
+            end
+        end
+    end
+end
+
+%% Delta UPDRS scores
+
+Delta_UPDRS317OFF = UPDRS_317OFF_3 - UPDRS_317OFF_1;
+Delta_UPDRS318OFF = UPDRS_318OFF_3 - UPDRS_318OFF_1;
+Delta_UPDRS317ON = UPDRS_317ON_3 - UPDRS_317ON_1;
+Delta_UPDRS318ON = UPDRS_318ON_3 - UPDRS_318ON_1;
+Delta_UPDRS210 = UPDRS_210_3 - UPDRS_210_1;
+
+%% Delta scatterplots
+figure();
+subplot(2,2,1)
+scatter(Delta_UPDRS210,delta_tremor_time)
+xticks([-2 -1 0 1 2])
+xlabel('\Delta UPDRS 2.10')
+ylabel('\Delta tremor time')
+subplot(2,2,2)
+scatter(Delta_UPDRS210,delta_median_tremor_power)
+xticks([-2 -1 0 1 2])
+xlabel('\Delta UPDRS 2.10')
+ylabel('\Delta median tremor power')
+subplot(2,2,3)
+scatter(Delta_UPDRS210,delta_modal_tremor_power)
+xticks([-2 -1 0 1 2])
+xlabel('\Delta UPDRS 2.10')
+ylabel('\Delta modal tremor power')
+subplot(2,2,4)
+scatter(Delta_UPDRS210,delta_perc90_tremor_power)
+xticks([-2 -1 0 1 2])
+xlabel('\Delta UPDRS 2.10')
+ylabel('\Delta 90th percentile of tremor power')
+
+%% Spearman rank correlation
+[Rho,pval] = corr([delta_tremor_time delta_modal_tremor_power delta_perc90_tremor_power Delta_UPDRS317OFF' Delta_UPDRS318OFF' Delta_UPDRS317ON' Delta_UPDRS318ON' Delta_UPDRS210' ],'Type','Spearman','rows','pairwise');
+rho_values = round(Rho,2);
+p_values = pval(triu(true(size(pval)), 1));
+
+% Apply FDR correction
+adjusted_p_values = mafdr(p_values, 'BHFDR', true);
+
+% Reconstruct the adjusted p-value matrix
+adjusted_P = zeros(size(pval)); % Start with a matrix of ones
+adjusted_P(triu(true(size(pval)), 1)) = adjusted_p_values; % Fill upper triangle
+adjusted_P = adjusted_P + adjusted_P' - diag(diag(adjusted_P)); % Reflect to lower triangle
+
+% Mask upper triangle
+mask = triu(true(size(rho_values)), 1);
+rho_values(mask) = NaN;
+adjusted_P(mask) = NaN;
+
+figure();
+colormap('sky')
+h = imagesc(rho_values);               % Create image object
+h.AlphaData = ~isnan(rho_values);      % Only show non-NaN values
+colorbar;
+set(gca, 'XTick',1:8,'XTickLabel',{'\Delta tremor time','\Delta modal tremor power','\Delta 90th perc of tremor power',...
+    '\Delta rest tremor severity in OFF','\Delta rest tremor constancy in OFF','\Delta rest tremor severity in ON','\Delta rest tremor constancy in ON',...
+    '\Delta patient-reported tremor'});
+set(gca, 'YTick',1:8,'YTickLabel',{'\Delta tremor time','\Delta modal tremor power','\Delta 90th perc of tremor power',...
+    '\Delta rest tremor severity in OFF','\Delta rest tremor constancy in OFF','\Delta rest tremor severity in ON','\Delta rest tremor constancy in ON',...
+    '\Delta patient-reported tremor'});
+ax = gca;
+ax.FontSize = 16;
+ax.TickLength = [0,0];
+
+% Add significance level annotations
+ax = gca;
+for i = 1:size(rho_values, 1)
+    for j = 1:i-1 % Only loop through lower triangle
+        if isnan(rho_values(i,j))
+            continue;
+        end
+        % Determine significance level
+        if adjusted_P(i, j) < 0.001
+            sig_level = '***'; % Highly significant
+        elseif adjusted_P(i, j) < 0.01
+            sig_level = '**';  % Significant
+        elseif adjusted_P(i, j) < 0.05
+            sig_level = '*';   % Marginally significant
+        else
+            sig_level = '';    % Not significant
+        end
+        
+        % Add text annotation
+        text_str = sprintf('%.2f\n%s', rho_values(i, j), sig_level);
+        text(j, i, text_str, 'HorizontalAlignment', 'center', 'VerticalAlignment', 'middle', 'FontSize', 12, 'Color', 'black');
+    end
+end
+clim([0 1])
+box off

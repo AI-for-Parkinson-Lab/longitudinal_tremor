@@ -122,6 +122,9 @@ for i = 1:length(Inclusion.ID)
         end
 end
 
+
+
+
 %% Extract start week of symptomatic drug treatment
 
 % First determine which participants already started before the study, and which participants do not start with drug treatment during the study period
@@ -201,23 +204,10 @@ for i = size(Visit1PPP,1)+1:size(Inclusion,1)
     end
 end
 
-%% Check if there are at least eight weeks of sensor data when unmedicated (necessary for piecewise linear trend estimation)
-
-for i = 1:length(Inclusion.ID)
-    if Inclusion.StartWeek(i)>=0
-        start_week = Inclusion.StartWeek(i);
-        if length(find(~isnan(tremor_time(i,weeks<start_week))))<8
-            Inclusion.SensorData(i) = 0;
-        end
-    end
-end
-
 %% Divide participants into baseline medicated and unmedicated 
 
 IDs_BaselineMedicated = Inclusion.ID(Inclusion.PDDiagnosis==1 & Inclusion.SameWatchside==1 & Inclusion.SensorData==1 & Inclusion.StartWeek==-1);
-IDs_BaselineUnmedicated = Inclusion.ID(Inclusion.PDDiagnosis==1 & Inclusion.SameWatchside==1 & Inclusion.SensorData==1 & Inclusion.StartWeek>=0);
+IDs_BaselineUnmedicated = Inclusion.ID(Inclusion.PDDiagnosis==1 & Inclusion.SameWatchside==1 & Inclusion.SensorData==1 & Inclusion.StartWeek>=0 );
 
-%% Save IDs and inclusion table
 
-save('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat',"IDs_BaselineUnmedicated", "IDs_BaselineMedicated")
-save('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Inclusion.mat',"Inclusion")
+
