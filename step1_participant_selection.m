@@ -90,9 +90,6 @@ addpath(genpath('utils\jsonlab'))
 filename = 'Tremor_aggregates.json';
 weeks = 0:2:104;
 tremor_time = [];
-median_tremor_power = [];
-modal_tremor_power = [];
-perc90_tremor_power = [];
 
 for i = 1:length(Inclusion.ID)
     id = Inclusion.ID{i};
@@ -106,7 +103,7 @@ for i = 1:length(Inclusion.ID)
         if isfile(file)
             Tremor_aggregates = loadjson(file);
             if Tremor_aggregates.metadata.nr_valid_days >= 3 % Week should contain at least 3 valid days (with 10 hours of data)
-                tremor_time(i,k) = Tremor_aggregates.aggregated_tremor_measures.perc_windows_tremor/100; % store as proportion instead of percentage
+                tremor_time(i,k) = Tremor_aggregates.aggregated_tremor_measures.perc_windows_tremor; 
             else
                 tremor_time(i,k) = NaN;
             end
@@ -193,6 +190,8 @@ Inclusion.StartWeek(ismember(Inclusion.ID,'POMU5A02B606856FA12F')) = 2; % starts
 Inclusion.StartWeek(ismember(Inclusion.ID,'POMU6A4763DC58628F76')) = 34;
 Inclusion.StartWeek(ismember(Inclusion.ID,'POMU8A79BAF84EA7AAA9')) = 61;
 Inclusion.StartWeek(ismember(Inclusion.ID,'POMU947ACDE0DB8BD887')) = 103;
+
+start_week_denovo = readtable('C:\Users\z835211\Documents\Data\DeNovo\start_week_denovo.csv');
 
 for i = size(Visit1PPP,1)+1:size(Inclusion,1)
     id = Inclusion.ID(i);

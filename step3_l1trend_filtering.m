@@ -1,0 +1,353 @@
+%% Step 3: Apply l1 trend filtering
+% The data is smoothed using l1-trend filtering, after splitting the data
+% in an unmedicated and medicated part
+
+clear all; close all;
+
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat'); % load selected IDs
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Inclusion.mat'); % load inclusion table (for start week data)
+start_week = Inclusion.StartWeek(ismember(Inclusion.ID,IDs_BaselineUnmedicated));
+start_week(mod(start_week,2)>0) = start_week(mod(start_week,2)>0) + 1; % Change odd start week number to even start week number
+
+%% Load sensor data
+
+addpath(genpath('utils\jsonlab'))
+IDs_included = [IDs_BaselineMedicated; IDs_BaselineUnmedicated];
+filename = 'Tremor_aggregates.json';
+weeks = 0:2:104;
+tremor_time = [];
+modal_tremor_power = [];
+perc90_tremor_power = [];
+
+for i = 1:length(IDs_included)
+    id = IDs_included{i};
+    for k = 1:length(weeks)
+        week = weeks(k);
+        if contains(Inclusion.Group(ismember(Inclusion.ID,id)),{'PPP'})
+            file = ['C:\Users\z835211\Documents\Data\PPP\aggregated_output_191125\ppp\' num2str(week) '\' id '\' filename];
+        else
+            file = ['C:\Users\z835211\Documents\Data\DeNovo\aggregated_output_201125\denovo\' num2str(week) '\' id '\' filename];
+        end
+        if isfile(file)
+            Tremor_aggregates = loadjson(file);
+            if Tremor_aggregates.metadata.nr_valid_days >= 3
+                tremor_time(i,k) = Tremor_aggregates.aggregated_tremor_measures.perc_windows_tremor/100; % store as proportion instead of percentage
+                if tremor_time(i,k) >= 0.035
+                    modal_tremor_power(i,k) = Tremor_aggregates.aggregated_tremor_measures.modal_tremor_power;
+                    perc90_tremor_power(i,k) = Tremor_aggregates.aggregated_tremor_measures.x0x39_0p_tremor_power;
+                else
+                    modal_tremor_power(i,k) = NaN;
+                    perc90_tremor_power(i,k) = NaN;
+                end
+            else
+                tremor_time(i,k) = NaN;
+                modal_tremor_power(i,k) = NaN;
+                perc90_tremor_power(i,k) = NaN;
+            end
+        else
+            tremor_time(i,k) = NaN;
+            modal_tremor_power(i,k) = NaN;
+            perc90_tremor_power(i,k) = NaN;
+        end
+    end
+end
+
+%% Split sensor data in medicated and unmedicated part
+
+tremor_time_medicated = tremor_time;
+tremor_time_unmedicated = tremor_time(1+length(IDs_BaselineMedicated):end,:);
+modal_tremor_power_medicated = modal_tremor_power;
+modal_tremor_power_unmedicated = modal_tremor_power(1+length(IDs_BaselineMedicated):end,:);
+perc90_tremor_power_medicated = perc90_tremor_power;
+perc90_tremor_power_unmedicated = perc90_tremor_power(1+length(IDs_BaselineMedicated):end,:);
+
+for i = 1:length(IDs_BaselineUnmedicated)
+    
+    tremor_time_medicated(i+length(IDs_BaselineMedicated),weeks<start_week(i)) = NaN(1,length(find(weeks<start_week(i))));
+    modal_tremor_power_medicated(i+length(IDs_BaselineMedicated),weeks<start_week(i)) = NaN(1,length(find(weeks<start_week(i))));
+    perc90_tremor_power_medicated(i+length(IDs_BaselineMedicated),weeks<start_week(i)) = NaN(1,length(find(weeks<start_week(i))));
+
+    tremor_time_unmedicated(i,weeks>=start_week(i)) = NaN(1,length(find(weeks>=start_week(i))));
+    modal_tremor_power_unmedicated(i,weeks>=start_week(i)) = NaN(1,length(find(weeks>=start_week(i))));
+    perc90_tremor_power_unmedicated(i,weeks>=start_week(i)) = NaN(1,length(find(weeks>=start_week(i))));
+
+end
+
+%% Determine lambda per measure (concatenate medicated and unmedicated groups)
+
+addpath(genpath('utils\l1tf'))
+
+measure = [perc90_tremor_power_medicated; perc90_tremor_power_unmedicated]; % Modify to run for other measures
+lambdarng = logspace(-3,1,500); % Range of possible regularization constants
+N = length(measure);
+Etst = NaN(N,length(lambdarng));
+
+%%
+for i = 1:N
+    tremor = measure(i,~isnan(measure(i,:)))';
+    week_vector = weeks(~isnan(measure(i,:)))';
+    if length(tremor)>=8
+        Etst(i,:) = l1lscv(week_vector, tremor, lambdarng);
+    else
+        Etst(i,:) = NaN(1,length(lambdarng));
+    end
+end
+
+% Find optimal lambda based on weighted error curve
+
+number_of_weeks_available = [];
+for i = 1:length(measure)
+    number_of_weeks_available(i) = length(find(~isnan(measure(i,:))));
+end
+weights = number_of_weeks_available/mean(number_of_weeks_available);
+
+mean_Etst = mean(Etst.*weights','omitnan'); % Calculate the weighted mean error function
+[~,j] = min(mean_Etst); % Determine the minimum
+lambda = lambdarng(j) % Optimal lambda
+
+figure();
+plot(lambdarng, mean_Etst)
+
+%% Fit the individual trends and calculate the variance of the signal and residuals/noise
+
+% For the medicated group:
+measure = perc90_tremor_power_medicated; % Modify to run for the other measures
+trend_perc90_tremor_power_medicated = NaN(length(measure),length(weeks)); % Modify to run for the other measures
+var_signal_medicated = [];
+var_noise_medicated = [];
+for k = 1:length(measure)
+    tremor = measure(k,~isnan(measure(k,:)))';
+    week_vector = weeks(~isnan(measure(k,:)))';
+    if length(tremor)>=8
+        uhat = l1lsregr(week_vector,tremor,lambda);
+        trend_perc90_tremor_power_medicated(k,~isnan(measure(k,:))) = uhat; % Modify to run for the other measures
+        error = tremor-uhat;
+        var_signal_medicated(k) = var(uhat,'omitnan');
+        var_noise_medicated(k) = var(error,'omitnan');
+    else
+        var_signal_medicated(k) =  NaN;
+        var_noise_medicated(k) =  NaN;
+    end
+end
+
+% For the unmedicated group:
+measure = perc90_tremor_power_unmedicated; % Modify to run for the other measures
+trend_perc90_tremor_power_unmedicated = NaN(length(measure),length(weeks)); % Modify to run for the other measures
+var_signal_unmedicated = [];
+var_noise_unmedicated = [];
+for k = 1:length(measure)
+    tremor = measure(k,~isnan(measure(k,:)))';
+    week_vector = weeks(~isnan(measure(k,:)))';
+    if length(tremor)>=8
+        uhat = l1lsregr(week_vector,tremor,lambda);
+        trend_perc90_tremor_power_unmedicated(k,~isnan(measure(k,:))) = uhat; % Modify to run for the other measures
+        error = tremor-uhat;
+        var_signal_unmedicated(k) = var(uhat,'omitnan');
+        var_noise_unmedicated(k) = var(error,'omitnan');
+    else
+        var_signal_unmedicated(k) =  NaN;
+        var_noise_unmedicated(k) =  NaN;
+    end
+end
+%% Determine the median and IQR of explained variance (for the medicated and unmedicated group separately)
+
+median_var_signal_medicated = median(var_signal_medicated./(var_signal_medicated + var_noise_medicated),'omitnan')
+IQR_var_signal_medicated = [prctile(var_signal_medicated./(var_signal_medicated + var_noise_medicated),25) prctile(var_signal_medicated./(var_signal_medicated+var_noise_medicated),75)]
+
+median_var_signal_unmedicated = median(var_signal_unmedicated./(var_signal_unmedicated + var_noise_unmedicated),'omitnan')
+IQR_var_signal_umedicated = [prctile(var_signal_unmedicated./(var_signal_unmedicated + var_noise_unmedicated),25) prctile(var_signal_unmedicated./(var_signal_unmedicated + var_noise_unmedicated),75)]
+
+%% Perform interpolation and extrapolation
+
+%load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_tremor_time')
+%load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_modal_tremor_power')
+%load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_perc90_tremor_power')
+
+measures_trend = {
+    trend_tremor_time_unmedicated, ...
+    trend_modal_tremor_power_unmedicated, ...
+    trend_perc90_tremor_power_unmedicated, ...
+    trend_tremor_time_medicated, ...
+    trend_modal_tremor_power_medicated, ...
+    trend_perc90_tremor_power_medicated
+};
+
+measures_filled = measures_trend;
+weeks = 0:2:104;
+
+for m = 1:length(measures_trend)   % loop over all measures
+    
+    data = measures_trend{m};
+    [rows, cols] = size(data);
+    filled = data;
+
+    for i = 1:rows
+        
+        rowData = data(i,:);
+        validIdx = find(~isnan(rowData));
+        missingIdx = find(isnan(rowData));
+
+        % Interpolate and extrapolate (limited to 2 pts)
+        if ~isempty(validIdx)
+            interpValues = interp1(validIdx, rowData(validIdx), (1:cols)', 'linear', 'extrap');
+
+            firstValid = validIdx(1);
+            lastValid  = validIdx(end);
+
+            startNaNs = missingIdx(missingIdx < firstValid);
+            endNaNs   = missingIdx(missingIdx > lastValid);
+
+            % limit extrapolation at start
+            if length(startNaNs) > 2
+                interpValues(startNaNs(1:end-2)) = NaN;
+            end
+            % limit extrapolation at end
+            if length(endNaNs) > 2
+                interpValues(endNaNs(3:end)) = NaN;
+            end
+
+            filled(i,:) = interpValues;
+        end
+
+        % Treatment start correction
+        if m <= 3  % unmedicated → delete points after start week
+            filled(i, weeks >= start_week(i)) = NaN;
+        else       % medicated → delete before start week
+            idx = i - length(IDs_BaselineMedicated);
+            if idx > 0
+                filled(i, weeks < start_week(idx)) = NaN;
+            end
+        end
+
+        % Remove isolated interpolated regions (5 consecutive NaNs rule)
+        isNan = isnan(data(i,:));
+        convmatch = conv(double(isNan), ones(1,5), 'valid') == 5;
+        remove_idx = find(convmatch) + 2;
+        filled(i, remove_idx) = NaN;
+
+        % Remove negative values 
+        filled(i, filled(i,:) < 0) = NaN;
+
+    end
+
+    % Store result
+    measures_filled{m} = filled;
+end
+
+trend_tremor_time_unmedicated_filled         = measures_filled{1};
+trend_modal_tremor_power_unmedicated_filled  = measures_filled{2};
+trend_perc90_tremor_power_unmedicated_filled = measures_filled{3};
+
+trend_tremor_time_medicated_filled           = measures_filled{4};
+trend_modal_tremor_power_medicated_filled    = measures_filled{5};
+trend_perc90_tremor_power_medicated_filled   = measures_filled{6};
+
+%% Individual figures
+week_vector = 0:2:104;
+% load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_filled.mat')
+
+%% Increasing pattern in an unmedicated participant
+close all;
+C = colororder('glow12');
+figure(); hold on;
+scatter(week_vector,100*tremor_time_unmedicated(ismember(IDs_BaselineUnmedicated,'POMU1E2C8100271EA284'),:),'k','filled')
+plot(week_vector,100*trend_tremor_time_unmedicated_filled(ismember(IDs_BaselineUnmedicated,'POMU1E2C8100271EA284'),:),'Color',C(2,:),'LineWidth',1.5)
+xlabel('Weeks since baseline')
+ylabel('Tremor time (% of inactive time)')
+ylim([0 100])
+xlim([0 104])
+
+% Second figure
+figure(); hold on;
+% Create dummy scatter for 'Tremor time' legend entry
+p1_dummy = scatter(nan, nan, 'k', 'filled');  % dummy for legend
+p2 = scatter(week_vector, modal_tremor_power_unmedicated(ismember(IDs_BaselineUnmedicated,'POMU1E2C8100271EA284'),:), 'kx');
+p3 = scatter(week_vector, perc90_tremor_power_unmedicated(ismember(IDs_BaselineUnmedicated,'POMU1E2C8100271EA284'),:), 'k^', 'filled');
+plot(week_vector, trend_modal_tremor_power_unmedicated_filled(ismember(IDs_BaselineUnmedicated,'POMU1E2C8100271EA284'),:), 'Color', C(2,:), 'LineWidth', 1.5)
+p4 = plot(week_vector, trend_perc90_tremor_power_unmedicated_filled(ismember(IDs_BaselineUnmedicated,'POMU1E2C8100271EA284'),:), 'Color', C(2,:), 'LineWidth', 1.5);
+
+xlabel('Weeks since baseline')
+ylabel('Tremor power (log values)')
+legend([p1_dummy, p2, p3, p4], {'Tremor time', 'Modal tremor power', '90th percentile of tremor power', 'Piecewise linear trend'})
+xlim([0 104])
+ylim([0 4])
+
+%% Stable pattern in an unmedicated participant
+close all;
+C = colororder('glow12');
+figure(); hold on;
+scatter(week_vector,100*tremor_time_unmedicated(ismember(IDs_BaselineUnmedicated,'POMU947ACDE0DB8BD887'),:),'k','filled')
+plot(week_vector,100*trend_tremor_time_unmedicated_filled(ismember(IDs_BaselineUnmedicated,'POMU947ACDE0DB8BD887'),:),'Color',C(2,:),'LineWidth',1.5)
+xlabel('Weeks since baseline')
+ylabel('Tremor time (% of inactive time)')
+ylim([0 100])
+xlim([0 104])
+
+% Second figure
+figure(); hold on;
+% Create dummy scatter for 'Tremor time' legend entry
+p1_dummy = scatter(nan, nan, 'k', 'filled');  % dummy for legend
+p2 = scatter(week_vector, modal_tremor_power_unmedicated(ismember(IDs_BaselineUnmedicated,'POMU947ACDE0DB8BD887'),:), 'kx');
+p3 = scatter(week_vector, perc90_tremor_power_unmedicated(ismember(IDs_BaselineUnmedicated,'POMU947ACDE0DB8BD887'),:), 'k^', 'filled');
+plot(week_vector, trend_modal_tremor_power_unmedicated_filled(ismember(IDs_BaselineUnmedicated,'POMU947ACDE0DB8BD887'),:), 'Color', C(2,:), 'LineWidth', 1.5)
+p4 = plot(week_vector, trend_perc90_tremor_power_unmedicated_filled(ismember(IDs_BaselineUnmedicated,'POMU947ACDE0DB8BD887'),:), 'Color', C(2,:), 'LineWidth', 1.5);
+
+xlabel('Weeks since baseline')
+ylabel('Tremor power (log values)')
+legend([p1_dummy, p2, p3, p4], {'Tremor time', 'Modal tremor power', '90th percentile of tremor power', 'Piecewise linear trend'})
+xlim([0 104])
+ylim([0 4])
+
+
+%% Varying pattern in a medicated participant
+close all;
+C = colororder('glow12');
+figure(); hold on;
+scatter(week_vector,100*tremor_time_medicated(ismember(IDs_BaselineMedicated,'POMU428FEF5AA8B909DC'),:),'k','filled')
+plot(week_vector,100*trend_tremor_time_medicated_filled(ismember(IDs_BaselineMedicated,'POMU428FEF5AA8B909DC'),:),'Color',C(2,:),'LineWidth',1.5)
+xlabel('Weeks since baseline')
+ylabel('Tremor time (% of inactive time)')
+ylim([0 100])
+xlim([0 104])
+
+% Second figure
+figure(); hold on;
+% Create dummy scatter for 'Tremor time' legend entry
+p1_dummy = scatter(nan, nan, 'k', 'filled');  % dummy for legend
+p2 = scatter(week_vector, modal_tremor_power_medicated(ismember(IDs_BaselineMedicated,'POMU428FEF5AA8B909DC'),:), 'kx');
+p3 = scatter(week_vector, perc90_tremor_power_medicated(ismember(IDs_BaselineMedicated,'POMU428FEF5AA8B909DC'),:), 'k^', 'filled');
+plot(week_vector, trend_modal_tremor_power_medicated_filled(ismember(IDs_BaselineMedicated,'POMU428FEF5AA8B909DC'),:), 'Color', C(2,:), 'LineWidth', 1.5)
+p4 = plot(week_vector, trend_perc90_tremor_power_medicated_filled(ismember(IDs_BaselineMedicated,'POMU428FEF5AA8B909DC'),:), 'Color', C(2,:), 'LineWidth', 1.5);
+
+xlabel('Weeks since baseline')
+ylabel('Tremor power (log values)')
+legend([p1_dummy, p2, p3, p4], {'Tremor time', 'Modal tremor power', '90th percentile of tremor power', 'Piecewise linear trend'})
+xlim([0 104])
+ylim([0 4])
+
+
+%% Decreaseing pattern in a medicated participant
+close all;
+C = colororder('glow12');
+figure(); hold on;
+scatter(week_vector,100*tremor_time_medicated(ismember(IDs_BaselineMedicated,'POMU64F88E3708B74416'),:),'k','filled')
+plot(week_vector,100*trend_tremor_time_medicated_filled(ismember(IDs_BaselineMedicated,'POMU64F88E3708B74416'),:),'Color',C(2,:),'LineWidth',1.5)
+xlabel('Weeks since baseline')
+ylabel('Tremor time (% of inactive time)')
+ylim([0 100])
+xlim([0 104])
+
+% Second figure
+figure(); hold on;
+% Create dummy scatter for 'Tremor time' legend entry
+p1_dummy = scatter(nan, nan, 'k', 'filled');  % dummy for legend
+p2 = scatter(week_vector, modal_tremor_power_medicated(ismember(IDs_BaselineMedicated,'POMU64F88E3708B74416'),:), 'kx');
+p3 = scatter(week_vector, perc90_tremor_power_medicated(ismember(IDs_BaselineMedicated,'POMU64F88E3708B74416'),:), 'k^', 'filled');
+plot(week_vector, trend_modal_tremor_power_medicated_filled(ismember(IDs_BaselineMedicated,'POMU64F88E3708B74416'),:), 'Color', C(2,:), 'LineWidth', 1.5)
+p4 = plot(week_vector, trend_perc90_tremor_power_medicated_filled(ismember(IDs_BaselineMedicated,'POMU64F88E3708B74416'),:), 'Color', C(2,:), 'LineWidth', 1.5);
+
+xlabel('Weeks since baseline')
+ylabel('Tremor power (log values)')
+legend([p1_dummy, p2, p3, p4], {'Tremor time', 'Modal tremor power', '90th percentile of tremor power', 'Piecewise linear trend'})
+xlim([0 104])
+ylim([0 4])

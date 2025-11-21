@@ -1,0 +1,85 @@
+%% Step 4: Inverse probability-of-censoring weighting 
+% Here, the data is prepared for cox proportional hazards model fitting,
+% but this analysis is performed in R.
+% Based on the results of the cox proportional hazards model, the weights
+% are created here
+
+clear all, close all;
+
+%% Load sensor data and IDs
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_filled.mat')
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat'); 
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Inclusion.mat');
+start_week = Inclusion.StartWeek(ismember(Inclusion.ID,IDs_BaselineUnmedicated));
+
+%% Calculate moving average of 4 weeks with different lags
+
+tremor_time = trend_tremor_time_unmedicated_filled;
+
+numSubjects = size(tremor_time,1);
+times = (0:2:104)';
+data = [];
+
+for i = 1:numSubjects
+    event = (times < start_week(i) - 1)';
+    X = tremor_time(i,event)'; 
+    data = [data; repmat(i, length(X), 1), times(1:length(X)), X, event(1:length(X))'];
+    if length(X)<53
+        data = [data; i, times(length(X)+1), tremor_time(i,length(X)+1), 0];
+    end
+end
+
+% Convert to table for easier handling
+dataTable = array2table(data, 'VariableNames', {'ID', 'Time', 'X', 'Event'});
+
+% Implement time lags
+windowSize = 2; % 4-week moving average
+
+for i = 1:numSubjects
+    movavg = movmean(dataTable.X(dataTable.ID==i), windowSize, 'Endpoints', 'fill'); 
+    dataTable.X_MA(dataTable.ID==i) = movavg;
+    if length(movavg)>3
+        dataTable.X_MA_Lagged1(dataTable.ID==i) = [NaN; movavg(1:end-1)];
+        dataTable.X_MA_Lagged2(dataTable.ID==i) = [NaN(2,1); movavg(1:end-2)];
+        dataTable.X_MA_Lagged3(dataTable.ID==i) = [NaN(3,1); movavg(1:end-3)];
+    elseif length(movavg)>2
+        dataTable.X_MA_Lagged1(dataTable.ID==i) = [NaN; movavg(1:end-1)];
+        dataTable.X_MA_Lagged2(dataTable.ID==i) = [NaN(2,1); movavg(1:end-2)];
+        dataTable.X_MA_Lagged3(dataTable.ID==i) = NaN(3,1);
+    elseif length(movavg)>1
+        dataTable.X_MA_Lagged1(dataTable.ID==i) = [NaN; movavg(1:end-1)];
+        dataTable.X_MA_Lagged2(dataTable.ID==i) = NaN(2,1);
+        dataTable.X_MA_Lagged3(dataTable.ID==i) = NaN(2,1);
+    end
+end
+
+%% Save data table for analysis in R
+writetable(dataTable,'C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Cox_data_table.csv')
+
+%% Load and modify survival probabilities from R
+opts = detectImportOptions('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\survival_probabilities.csv');
+opts = setvartype(opts,"double");
+survival_probabilities = readtable('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\survival_probabilities.csv',opts);
+
+% For one subject there is a shift in survival probabilities due to missing
+% data:
+survival_probabilities(77,8:18) =  survival_probabilities(77,5:15);
+survival_probabilities.time_10(77) = 1;
+survival_probabilities.time_12(77) = 1;
+survival_probabilities.time_14(77) = 1;
+
+% Store in table
+Survival = survival_probabilities;
+
+weeks = {};
+for i = 6:2:106
+    weeks = [weeks; ['Week',num2str(i)]];
+end
+Survival = removevars(Survival, "Var1");
+Survival = renamevars(Survival,Survival.Properties.VariableNames,['ID'; weeks]);
+Survival.ID = IDs_BaselineUnmedicated;
+
+%% Compute the weights for IPCW
+IPCW = Survival;
+IPCW(:,2:end) = 1./IPCW(:,2:end);
+save('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IPCW',"IPCW")
