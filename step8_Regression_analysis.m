@@ -1,6 +1,5 @@
 %% Step 8: Perform regression analysis to assess the effect of dopaminergic medication
-% Covariates include change in LEDD, disease duration and watch side (more-
-% or less- affected side)
+% Covariates include change in LEDD, disease duration and watch side (more- or less- affected side)
 clear all; close all;
 
 %% Load sensor data and IDs
