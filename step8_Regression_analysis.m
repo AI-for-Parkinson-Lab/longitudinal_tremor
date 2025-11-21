@@ -1,14 +1,17 @@
-%% 
+%% Step 8: Perform regression analysis to assess the effect of dopaminergic medication
+% Covariates include change in LEDD, disease duration and watch side (more-
+% or less- affected side)
 clear all; close all;
-%%
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250327_inclusion_exclusion\IDs.mat')
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250523_L1trend\trends2.mat')
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250327_inclusion_exclusion\visit_week_numbers.mat')
 
-%% Load clinical data
-Visit1PPP = readtable("C:\Users\z835211\Documents\Data\CSV files clinical and dempographic data\General_visit1.csv");
-Visit2PPP = readtable("C:\Users\z835211\Documents\Data\CSV files clinical and dempographic data\General_visit2.csv");
-Visit3PPP = readtable("C:\Users\z835211\Documents\Data\CSV files clinical and dempographic data\General_visit3.csv");
+%% Load sensor data and IDs
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_filled.mat')
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat'); 
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\visit_week_numbers.mat') % load visit week numbers
+
+%% Load clinical data (only data from PPP as only the baseline medicated participants are used)
+Visit1PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit1.csv");
+Visit2PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit2.csv");
+Visit3PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit3.csv");
 
 % Convert IDs of PPP to same format
 ids = char(Visit1PPP.id);
@@ -21,7 +24,8 @@ ids = char(Visit3PPP.id);
 new_ids = ids(:,1:16);
 Visit3PPP.id  = cellstr(strcat(repmat('POMU',length(new_ids),1),new_ids));
 
-%% Extract clinical information
+%% Extract disease duration and watchside
+
 Visit1 = Visit1PPP;
 Final_most_affected = [];
 MonthSinceDiag = [];
@@ -104,21 +108,8 @@ for i = 1:length(IDs_BaselineMedicated)
         Final_most_affected(i) = NaN;
     end
 
-    % Rest_tremor_OFF(i) = Visit1.Up3OfRAmpLegNonDev(contains(Visit1.id,ppp_pep_number)) + Visit1.Up3OfRAmpLegYesDev(contains(Visit1.id,ppp_pep_number)) + Visit1.Up3OfRAmpArmYesDev(contains(Visit1.id,ppp_pep_number)) + Visit1.Up3OfRAmpArmNonDev(contains(Visit1.id,ppp_pep_number)) + Visit1.Up3OfConstan(contains(Visit1.id,ppp_pep_number));
-    % Rest_tremor_ON(i) = Visit1.Up3OnRAmpLegNonDev(contains(Visit1.id,ppp_pep_number)) + Visit1.Up3OnRAmpLegYesDev(contains(Visit1.id,ppp_pep_number)) + Visit1.Up3OnRAmpArmYesDev(contains(Visit1.id,ppp_pep_number)) + Visit1.Up3OnRAmpArmNonDev(contains(Visit1.id,ppp_pep_number)) + Visit1.Up3OnConstan(contains(Visit1.id,ppp_pep_number));
-    Rest_tremor_OFF(i) = Visit1.Up3OfConstan(contains(Visit1.id,ppp_pep_number));
-    Rest_tremor_ON(i) = Visit1.Up3OnConstan(contains(Visit1.id,ppp_pep_number));
-    Proportional_change(i) = (Rest_tremor_OFF(i)  - Rest_tremor_ON(i))/Rest_tremor_OFF(i);
-
-    if isnan(Proportional_change(i))
-        Levadopa_responsiveness(i) = NaN;
-    elseif Proportional_change(i) >= 0.25
-        Levadopa_responsiveness(i) = 1;
-    else
-        Levadopa_responsiveness(i) = 0;
-    end
-
 end
+
 % Apply corrections (negative disease duration)
 MonthSinceDiag(MonthSinceDiag<0) = NaN;
 
@@ -171,48 +162,36 @@ end
 IDs_incorrect_baseline_LEDD = ['POMU066326B8F70E150E','POMU0A109E0D97672361','POMU428FEF5AA8B909DC','POMU6080FFB910C10DC3','POMUA249715D7C6FDE8F'];
 LEDD_visit1(ismember(IDs_BaselineMedicated,IDs_incorrect_baseline_LEDD)) = NaN;
 
-%% Create delta table (2 year)
+%% Compute 2-year changes
+
 start_idx = 2;
 end_idx = 51;
 
-% IDs_BaselineMedicated_tremor = IDs_BaselineMedicated(all(~isnan(trend_median_tremor_power_medicated_filled(1:length(IDs_BaselineMedicated),[2 51])),2));
-
-idx = contains([IDs_BaselineMedicated; IDs_StartMedication],IDs_BaselineMedicated);
+idx = contains([IDs_BaselineMedicated; IDs_BaselineUnmedicated],IDs_BaselineMedicated);
 
 Delta = [];
 Delta.tremor_time = logit(trend_tremor_time_medicated_filled(idx,end_idx)) - logit(trend_tremor_time_medicated_filled(idx,start_idx));
-Delta.tremor_power_median = trend_median_tremor_power_medicated_filled(idx,end_idx) - trend_median_tremor_power_medicated_filled(idx,start_idx);
 Delta.tremor_power_mode = trend_modal_tremor_power_medicated_filled(idx,end_idx) - trend_modal_tremor_power_medicated_filled(idx,start_idx);
 Delta.tremor_power_90th = trend_perc90_tremor_power_medicated_filled(idx,end_idx) - trend_perc90_tremor_power_medicated_filled(idx,start_idx);
 Delta.LEDD = LEDD_visit3(idx)' - LEDD_visit1(idx)';
 Delta.Disease_duration = MonthSinceDiag(idx)';
 Delta.Least_affected = 1 - Final_most_affected(idx)';
-Delta.Levadopa_responsiveness = Levadopa_responsiveness(idx)';
 Delta_table = struct2table(Delta);
-% Delta_table.Interaction_LEDD_Disease_duration = Delta_table.LEDD.*Delta_table.Disease_duration;
-Delta_table.LEDD_responsiveness_interaction = Delta_table.LEDD.*Delta_table.Levadopa_responsiveness;
 
 
 %% Multivariable linear regression
 close all;
 
-Delta_standardized = (Delta_table.Variables - mean(Delta_table.Variables,'omitnan'))./std(Delta_table.Variables,'omitnan');
-X = [ones(size(Delta_standardized,1),1) Delta_standardized(:,[5 6 7 8 9])];
+Delta_standardized = (Delta_table.Variables - mean(Delta_table.Variables,'omitnan'))./std(Delta_table.Variables,'omitnan'); % Standardize variables
+X = [ones(size(Delta_standardized,1),1) Delta_standardized(:,[4 5 6])];
 
 delta_tremor_time = Delta_standardized(:,1);
-delta_median_tremor_power = Delta_standardized(:,2);
-delta_modal_tremor_power = Delta_standardized(:,3);
-delta_tremor_power_90th = Delta_standardized(:,4);
-
-% use same group for tremor time
-% delta_tremor_time(isnan(delta_tremor_power_90th)) = NaN; 
+delta_modal_tremor_power = Delta_standardized(:,2);
+delta_tremor_power_90th = Delta_standardized(:,3);
 
 [b,bint,r,rint,stats] = regress(delta_tremor_time,X);
 b_standardized_tremor_time = b(2:end)'
 bint_standardized_tremor_time = bint(2:end,:)'
-
-mdl = fitlm(X, delta_tremor_time);
-disp(mdl.Coefficients)
 
 % Check residuals
 % figure(); histogram(r)
@@ -223,7 +202,6 @@ disp(mdl.Coefficients)
 b_standardized_modal_tremor_power = b(2:end)'
 bint_standardized_modal_tremor_power = bint(2:end,:)'
 
-
 [b,bint,r,rint,stats] = regress(delta_tremor_power_90th,X);
 b_standardized_tremor_power_90th = b(2:end)'
 bint_standardized_tremor_power_90th = bint(2:end,:)'
@@ -233,16 +211,9 @@ bint_standardized_tremor_power_90th = bint(2:end,:)'
 % figure(); scatter(delta_tremor_power_90th,r)
 % [h,p] = kstest(r)
 
-%%
-figure(); hold on;
-scatter(Delta_table.LEDD(Delta_table.Levadopa_responsiveness==1),Delta_table.tremor_time(Delta_table.Levadopa_responsiveness==1))
-scatter(Delta_table.LEDD(Delta_table.Levadopa_responsiveness==0),Delta_table.tremor_time(Delta_table.Levadopa_responsiveness==0))
 
+%% Plot coefficients 
 
-
-
-%% Forest plot
-% Names = { '\DeltaLEDD','Disease duration','Least-affected side'};
 cmap = colororder();
 n=3;
 m = 11;
@@ -269,14 +240,12 @@ xlim([-0.5 0.5])
 xlabel('Standardized \beta coefficients with 95%-CI')
 legend({'\DeltaLEDD','','','','','','Disease duration','','','','','','Least-affected side'}')
 
-%% Scatterplots
+%% Scatterplot
 
 Delta = Delta_table.Variables;
-X = [ones(size(Delta,1),1) Delta(:,[5 6 7])];
+X = [ones(size(Delta,1),1) Delta(:,[4 5 6])];
 
 delta_tremor_time = Delta(:,1);
-
-% delta_tremor_time(isnan(Delta(:,2)))=NaN;
 
 [b_tremor_time] = regress(delta_tremor_time,X);
 
@@ -291,22 +260,4 @@ text(70,-0.25,'Decrease in tremor time')
 ylabel('\Delta tremor time (log odds-ratio)')
 xlabel('Disease duration (months)')
 
-%%
-Delta = Delta_table.Variables;
-X = [ones(size(Delta,1),1) Delta(:,[5 6 7])];
-
-delta_tremor_power_90th = Delta(:,4);
-
-[b_tremor_power] = regress(delta_tremor_power_90th,X);
-
-corrected_delta_tremor_power = delta_tremor_power_90th - b_tremor_power(2)*X(:,2) - b_tremor_power(4)*X(:,4) ;
-
-figure(); hold on;
-scatter(X(:,3),corrected_delta_tremor_power,'filled','k','MarkerFaceAlpha',0.4,['MarkerEdgeAlpha'],0.4)
-plot(0:90,b_tremor_power(1)+[0:90]*b_tremor_power(3),'k','LineWidth',2)
-yline(0,'k--')
-text(70,0.3,'Increase in tremor power')
-text(70,-0.3,'Decrease in tremor power')
-ylabel('\Delta 90th percentile of tremor power')
-xlabel('Disease duration (months)')
 

@@ -1,57 +1,40 @@
-%% 
+%% Step 7: Assess correlation to changes in patient-reported tremor score
 clear all; close all;
-%% Load sensor data
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250523_L1trend\trends2.mat')
 
-%% Load IDs
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250327_inclusion_exclusion\IDs.mat')
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250410_matching_info\IDs_BaselineMedicated_matched.mat')
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250523_l1trend\IDs_BaselineUnmedicated_L1trend.mat')
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250327_inclusion_exclusion\Inclusion.mat')
+%% Load sensor data and IDs
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_filled.mat')
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat'); 
 
 %% Merge medicated and unmedicated data
-trend_tremor_time_start_medication_A = trend_tremor_time_medicated_filled(length(IDs_BaselineMedicated)+1:end,:);
-trend_tremor_time_start_medication_B = trend_tremor_time_unmedicated_filled(1:length(IDs_StartMedication),:);
-trend_tremor_time_start_medication = trend_tremor_time_start_medication_A;
-trend_tremor_time_start_medication(isnan(trend_tremor_time_start_medication_A)) = trend_tremor_time_start_medication_B(isnan(trend_tremor_time_start_medication_A));
+tremor_time = trend_tremor_time_medicated_filled;
+tremor_time_unmedicated_total = trend_tremor_time_medicated_filled(length(IDs_BaselineMedicated)+1:end,:);
+tremor_time_unmedicated_total(isnan(tremor_time_unmedicated_total)) = trend_tremor_time_unmedicated_filled(isnan(tremor_time_unmedicated_total));
+tremor_time(length(IDs_BaselineMedicated)+1:end,:) = tremor_time_unmedicated_total;
 
-trend_median_tremor_power_start_medication_A = trend_median_tremor_power_medicated_filled(length(IDs_BaselineMedicated)+1:end,:);
-trend_median_tremor_power_start_medication_B = trend_median_tremor_power_unmedicated_filled(1:length(IDs_StartMedication),:);
-trend_median_tremor_power_start_medication = trend_median_tremor_power_start_medication_A;
-trend_median_tremor_power_start_medication(isnan(trend_median_tremor_power_start_medication_A)) = trend_median_tremor_power_start_medication_B(isnan(trend_median_tremor_power_start_medication_A));
+modal_tremor_power = trend_modal_tremor_power_medicated_filled;
+modal_tremor_power_unmedicated_total = trend_modal_tremor_power_medicated_filled(length(IDs_BaselineMedicated)+1:end,:);
+modal_tremor_power_unmedicated_total(isnan(modal_tremor_power_unmedicated_total)) = trend_modal_tremor_power_unmedicated_filled(isnan(modal_tremor_power_unmedicated_total));
+modal_tremor_power(length(IDs_BaselineMedicated)+1:end,:) = modal_tremor_power_unmedicated_total;
 
-trend_modal_tremor_power_start_medication_A = trend_modal_tremor_power_medicated_filled(length(IDs_BaselineMedicated)+1:end,:);
-trend_modal_tremor_power_start_medication_B = trend_modal_tremor_power_unmedicated_filled(1:length(IDs_StartMedication),:);
-trend_modal_tremor_power_start_medication = trend_modal_tremor_power_start_medication_A;
-trend_modal_tremor_power_start_medication(isnan(trend_modal_tremor_power_start_medication_A)) = trend_modal_tremor_power_start_medication_B(isnan(trend_modal_tremor_power_start_medication_A));
+perc90_tremor_power = trend_perc90_tremor_power_medicated_filled;
+perc90_tremor_power_unmedicated_total = trend_perc90_tremor_power_medicated_filled(length(IDs_BaselineMedicated)+1:end,:);
+perc90_tremor_power_unmedicated_total(isnan(perc90_tremor_power_unmedicated_total)) = trend_perc90_tremor_power_unmedicated_filled(isnan(perc90_tremor_power_unmedicated_total));
+perc90_tremor_power(length(IDs_BaselineMedicated)+1:end,:) = perc90_tremor_power_unmedicated_total;
 
-trend_perc90_tremor_power_start_medication_A = trend_perc90_tremor_power_medicated_filled(length(IDs_BaselineMedicated)+1:end,:);
-trend_perc90_tremor_power_start_medication_B = trend_perc90_tremor_power_unmedicated_filled(1:length(IDs_StartMedication),:);
-trend_perc90_tremor_power_start_medication = trend_perc90_tremor_power_start_medication_A;
-trend_perc90_tremor_power_start_medication(isnan(trend_perc90_tremor_power_start_medication_A)) = trend_perc90_tremor_power_start_medication_B(isnan(trend_perc90_tremor_power_start_medication_A));
+%% Calculate 2-year delta of whole group
 
-%% Combine and calculate 2-year delta of whole group
-
-trend_tremor_time = [trend_tremor_time_medicated_filled(1:length(IDs_BaselineMedicated),:); trend_tremor_time_start_medication; trend_tremor_time_unmedicated_filled(1+length(IDs_StartMedication):end,:)];
-delta_tremor_time = logit(trend_tremor_time(:,51)) - logit(trend_tremor_time(:,2));
-
-trend_median_tremor_power = [trend_median_tremor_power_medicated_filled(1:length(IDs_BaselineMedicated),:); trend_median_tremor_power_start_medication; trend_median_tremor_power_unmedicated_filled(1+length(IDs_StartMedication):end,:)];
-delta_median_tremor_power = trend_median_tremor_power(:,51) - trend_median_tremor_power(:,2);
-
-trend_modal_tremor_power = [trend_modal_tremor_power_medicated_filled(1:length(IDs_BaselineMedicated),:); trend_modal_tremor_power_start_medication; trend_modal_tremor_power_unmedicated_filled(1+length(IDs_StartMedication):end,:)];
-delta_modal_tremor_power = trend_modal_tremor_power(:,51) - trend_modal_tremor_power(:,2);
-
-trend_perc90_tremor_power = [trend_perc90_tremor_power_medicated_filled(1:length(IDs_BaselineMedicated),:); trend_perc90_tremor_power_start_medication; trend_perc90_tremor_power_unmedicated_filled(1+length(IDs_StartMedication):end,:)];
-delta_perc90_tremor_power = trend_perc90_tremor_power(:,51) - trend_perc90_tremor_power(:,2);
+delta_tremor_time = logit(tremor_time(:,51)) - logit(tremor_time(:,2));
+delta_modal_tremor_power = modal_tremor_power(:,51) - modal_tremor_power(:,2);
+delta_perc90_tremor_power = perc90_tremor_power(:,51) - perc90_tremor_power(:,2);
 
 %% Load clinical data
 Visit1DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit1_DeNovo.csv");
 Visit2DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit2_DeNovo.csv");
 Visit3DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit3_DeNovo.csv");
 
-Visit1PPP = readtable("C:\Users\z835211\Documents\Data\CSV files clinical and dempographic data\General_visit1.csv");
-Visit2PPP = readtable("C:\Users\z835211\Documents\Data\CSV files clinical and dempographic data\General_visit2.csv");
-Visit3PPP = readtable("C:\Users\z835211\Documents\Data\CSV files clinical and dempographic data\General_visit3.csv");
+Visit1PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit1.csv");
+Visit2PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit2.csv");
+Visit3PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit3.csv");
 
 % Convert IDs of PPP to same format
 ids = char(Visit1PPP.id);
@@ -65,7 +48,7 @@ new_ids = ids(:,1:16);
 Visit3PPP.id  = cellstr(strcat(repmat('POMU',length(new_ids),1),new_ids));
 
 %% Extract UPDRS scores
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250327_inclusion_exclusion\visit_week_numbers.mat')
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\visit_week_numbers.mat') % load visit week numbers
 
 UPDRS_317OFF_1 = [];
 UPDRS_318OFF_1 = [];
@@ -80,10 +63,10 @@ UPDRS_318ON_1 = [];
 UPDRS_317ON_3 = [];
 UPDRS_318ON_3 = [];
 
-IDs_all = [IDs_BaselineMedicated; IDs_StartMedication; IDs_AllUnmedicated];
+IDs_included = [IDs_BaselineMedicated; IDs_BaselineUnmedicated];
 
-for i = 1:length(IDs_all)
-    id = IDs_all{i};
+for i = 1:length(IDs_included)
+    id = IDs_included{i};
 
     if ~isempty(find(contains(Visit1PPP.id,id)))
 
@@ -152,7 +135,7 @@ for i = 1:length(IDs_all)
     end
 end
 
-%% Delta UPDRS scores
+%% Calculate 2-year delta of UPDRS scores
 
 Delta_UPDRS317OFF = UPDRS_317OFF_3 - UPDRS_317OFF_1;
 Delta_UPDRS318OFF = UPDRS_318OFF_3 - UPDRS_318OFF_1;
@@ -160,46 +143,14 @@ Delta_UPDRS317ON = UPDRS_317ON_3 - UPDRS_317ON_1;
 Delta_UPDRS318ON = UPDRS_318ON_3 - UPDRS_318ON_1;
 Delta_UPDRS210 = UPDRS_210_3 - UPDRS_210_1;
 
-%% Delta scatterplots
-figure();
-subplot(2,2,1)
-scatter(Delta_UPDRS210,delta_tremor_time)
-xticks([-2 -1 0 1 2])
-xlabel('\Delta UPDRS 2.10')
-ylabel('\Delta tremor time')
-subplot(2,2,2)
-scatter(Delta_UPDRS210,delta_median_tremor_power)
-xticks([-2 -1 0 1 2])
-xlabel('\Delta UPDRS 2.10')
-ylabel('\Delta median tremor power')
-subplot(2,2,3)
-scatter(Delta_UPDRS210,delta_modal_tremor_power)
-xticks([-2 -1 0 1 2])
-xlabel('\Delta UPDRS 2.10')
-ylabel('\Delta modal tremor power')
-subplot(2,2,4)
-scatter(Delta_UPDRS210,delta_perc90_tremor_power)
-xticks([-2 -1 0 1 2])
-xlabel('\Delta UPDRS 2.10')
-ylabel('\Delta 90th percentile of tremor power')
-
 %% Spearman rank correlation
 [Rho,pval] = corr([delta_tremor_time delta_modal_tremor_power delta_perc90_tremor_power Delta_UPDRS317OFF' Delta_UPDRS318OFF' Delta_UPDRS317ON' Delta_UPDRS318ON' Delta_UPDRS210' ],'Type','Spearman','rows','pairwise');
 rho_values = round(Rho,2);
-p_values = pval(triu(true(size(pval)), 1));
-
-% Apply FDR correction
-adjusted_p_values = mafdr(p_values, 'BHFDR', true);
-
-% Reconstruct the adjusted p-value matrix
-adjusted_P = zeros(size(pval)); % Start with a matrix of ones
-adjusted_P(triu(true(size(pval)), 1)) = adjusted_p_values; % Fill upper triangle
-adjusted_P = adjusted_P + adjusted_P' - diag(diag(adjusted_P)); % Reflect to lower triangle
 
 % Mask upper triangle
 mask = triu(true(size(rho_values)), 1);
 rho_values(mask) = NaN;
-adjusted_P(mask) = NaN;
+pval(mask) = NaN;
 
 figure();
 colormap('sky')
@@ -224,11 +175,11 @@ for i = 1:size(rho_values, 1)
             continue;
         end
         % Determine significance level
-        if adjusted_P(i, j) < 0.001
+        if pval(i, j) < 0.001
             sig_level = '***'; % Highly significant
-        elseif adjusted_P(i, j) < 0.01
+        elseif pval(i, j) < 0.01
             sig_level = '**';  % Significant
-        elseif adjusted_P(i, j) < 0.05
+        elseif pval(i, j) < 0.05
             sig_level = '*';   % Marginally significant
         else
             sig_level = '';    % Not significant
@@ -241,3 +192,7 @@ for i = 1:size(rho_values, 1)
 end
 clim([0 1])
 box off
+
+%% 
+
+length(find(~isnan(Delta_UPDRS318OFF) & ~isnan(Delta_UPDRS210)))

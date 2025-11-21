@@ -7,6 +7,25 @@ load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\202
 
 BaselineMedicated = BaselineMedicated(ismember(BaselineMedicated.ID,IDs_BaselineMedicated_matched),:);
 StartMedication = BaselineUnmedicated(ismember(BaselineUnmedicated.ID,IDs_StartMedication_L1trend),:);
+
+%% Create survival curve
+n = length(StartWeek);
+
+% Sort weeks
+sortedWeeks = sort(StartWeek);
+
+% Compute number remaining at each unique week
+[counts, uniqueWeeks] = groupcounts(sortedWeeks');
+
+numRemaining = n - cumsum(counts);
+
+% Plot
+figure;
+stairs([0; uniqueWeeks-1], [n; numRemaining],'k', 'LineWidth', 1.5);
+xlabel('Weeks since baseline');
+ylabel('Number of participants in unmedicated group');
+ylim([0 80])
+xlim([0 100])
 %% Age
 % median(BaselineMedicated.Age)
 % prctile(BaselineMedicated.Age,25)
