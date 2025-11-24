@@ -1,4 +1,4 @@
-%% Step 6: Assess the sensitivity to change
+%% Step 6a: Assess the sensitivity to change
 % Compute one- and two-year standardized response means of sensor-derived
 % tremor measures and clinical scores
 
@@ -119,13 +119,12 @@ CI_UPDRS_medicated = [];
 N_UPDRS_medicated = [];
 
 for k = 1:length(UPDRS_names)
-    UPDRS_score3 = eval([UPDRS_names{k} '_2']); % score 2 or 3
-    UPDRS_score1 = eval([UPDRS_names{k} '_1']);
+    UPDRS_score_followup = eval([UPDRS_names{k} '_2']); % score 2 or 3
+    UPDRS_score_baseline = eval([UPDRS_names{k} '_1']);
 
-    SRM_UPDRS_medicated(k) = mean(UPDRS_score3-UPDRS_score1,'omitnan')/std(UPDRS_score3-UPDRS_score1,'omitnan');
-    CI_UPDRS_medicated(k,1:2) = bootci(10000,SRM_function,UPDRS_score3 - UPDRS_score1);
-
-    N_UPDRS_medicated(k) = length(find(~isnan(UPDRS_score3) & ~isnan(UPDRS_score1)));
+    SRM_UPDRS_medicated(k) = mean(UPDRS_score_followup-UPDRS_score_baseline,'omitnan')/std(UPDRS_score_followup-UPDRS_score_baseline,'omitnan');
+    CI_UPDRS_medicated(k,1:2) = bootci(10000,SRM_function,UPDRS_score_followup - UPDRS_score_baseline);
+    N_UPDRS_medicated(k) = length(find(~isnan(UPDRS_score_followup) & ~isnan(UPDRS_score_baseline)));
 end
 
 %% Determine SRM of sensor data
@@ -152,7 +151,6 @@ for k = 1:length(sensor_names)
     
     SRM_sensor_medicated(k) = mean(data(idx,last_week_idx) - data(idx,first_week_idx),'omitnan')/std(data(idx,last_week_idx) - data(idx,first_week_idx),'omitnan');
     CI_sensor_medicated(k,1:2) = bootci(10000,SRM_function,data(idx,last_week_idx) - data(idx,first_week_idx));
-
     N_sensor_medicated(k) = length(find(~isnan(data(idx,last_week_idx)) & ~isnan(data(idx,first_week_idx))));
 end
 
@@ -280,26 +278,23 @@ weights = IPCW(:,2:end).Variables;
 weights = [ones(78,3) weights]; % The weights start at week 6, so add 3 columns of ones
 weights(:,51) = weights(:,50); % The weights don't change between week 98 and 100, duplicate to increase availability of weights
 
-idx_2year = contains(IDs_BaselineUnmedicated,IDs_BaselineUnmedicated); % Select full group or tremor group
+idx_followup = contains(IDs_BaselineUnmedicated,IDs_BaselineUnmedicated); % Select full group or tremor group
 last_week_idx = 26;
-weights_2year = weights(idx_2year,last_week_idx);
+weights_followup = weights(idx_followup,last_week_idx);
 
 for k = 1:length(UPDRS_names)
 
-    UPDRS_score3 = eval([UPDRS_names{k} '_2']);
-    UPDRS_score1 = eval([UPDRS_names{k} '_1']);
+    UPDRS_score_followup = eval([UPDRS_names{k} '_2']);
+    UPDRS_score_baseline = eval([UPDRS_names{k} '_1']);
 
-    change = (UPDRS_score3-UPDRS_score1)';
+    change = (UPDRS_score_followup-UPDRS_score_baseline)';
 
-    weighted_SRM_UPDRS_unmedicated(k) = weighted_SRM_function(change,weights_2year);
-    weighted_CI_UPDRS_unmedicated(k,1:2)= bootci(10000,{weighted_SRM_function,change,weights_2year});
-
-    N_UPDRS_unmedicated(k) = length(find(~isnan(UPDRS_score3) & ~isnan(UPDRS_score1) & ~isnan(weights_2year')));
+    weighted_SRM_UPDRS_unmedicated(k) = weighted_SRM_function(change,weights_followup);
+    weighted_CI_UPDRS_unmedicated(k,1:2)= bootci(10000,{weighted_SRM_function,change,weights_followup});
+    N_UPDRS_unmedicated(k) = length(find(~isnan(UPDRS_score_followup) & ~isnan(UPDRS_score_baseline) & ~isnan(weights_followup')));
 end
 
 %% Determine SRM of sensor data
-
-SRM_function = @(x)mean(x,'omitnan')/std(x,'omitnan');
 
 tremor_time_logit = real(logit(trend_tremor_time_unmedicated_filled));
 
@@ -321,12 +316,9 @@ for k = 1:length(sensor_names)
 
     change = data(idx,last_week_idx) - data(idx,first_week_idx);
 
-    weights_boostrap = weights_2year;
-
-    weighted_SRM_sensor_unmedicated(k) = weighted_SRM_function(change,weights_boostrap);
-    weighted_CI_sensor_unmedicated(k,1:2) = bootci(10000,{weighted_SRM_function,change,weights_boostrap});
-
-    N_sensor_unmedicated(k) = length(find(~isnan(data(idx,last_week_idx)) & ~isnan(data(idx,first_week_idx)) & ~isnan(weights_boostrap)));
+    weighted_SRM_sensor_unmedicated(k) = weighted_SRM_function(change,weights_followup);
+    weighted_CI_sensor_unmedicated(k,1:2) = bootci(10000,{weighted_SRM_function,change,weights_followup});
+    N_sensor_unmedicated(k) = length(find(~isnan(data(idx,last_week_idx)) & ~isnan(data(idx,first_week_idx)) & ~isnan(weights_followup)));
 end
 
 %% Create forest plot
@@ -472,13 +464,13 @@ bootstat_UPDRS_medicated = [];
 Bootstrap_IDs = cell(1, length(UPDRS_names));  
 
 for k = 1:length(UPDRS_names)
-    UPDRS_score3 = eval([UPDRS_names{k} '_2']); % score 2 or 3
-    UPDRS_score1 = eval([UPDRS_names{k} '_1']);
+    UPDRS_score_followup = eval([UPDRS_names{k} '_2']); % score 2 or 3
+    UPDRS_score_baseline = eval([UPDRS_names{k} '_1']);
 
-    SRM_UPDRS_medicated(k) = mean(UPDRS_score3-UPDRS_score1,'omitnan')/std(UPDRS_score3-UPDRS_score1,'omitnan');
-    [CI_UPDRS_medicated(k,1:2), bootstat_UPDRS_medicated(:,k)] = bootci(10000,SRM_function,UPDRS_score3 - UPDRS_score1);
+    SRM_UPDRS_medicated(k) = mean(UPDRS_score_followup-UPDRS_score_baseline,'omitnan')/std(UPDRS_score_followup-UPDRS_score_baseline,'omitnan');
+    [CI_UPDRS_medicated(k,1:2), bootstat_UPDRS_medicated(:,k)] = bootci(10000,SRM_function,UPDRS_score_followup - UPDRS_score_baseline);
 
-    N_UPDRS_medicated(k) = length(find(~isnan(UPDRS_score3) & ~isnan(UPDRS_score1)));
+    N_UPDRS_medicated(k) = length(find(~isnan(UPDRS_score_followup) & ~isnan(UPDRS_score_baseline)));
     % Bootstrap_IDs{k} = IDs_BaselineMedicated_statistics(~isnan(UPDRS_score3) & ~isnan(UPDRS_score1)); 
 
 end
@@ -646,25 +638,25 @@ weights = IPCW(:,2:end).Variables;
 weights = [ones(77,3) weights]; % The weights start at week 6, so add 3 columns of ones
 weights(:,51) = weights(:,50); % The weights don't change between week 98 and 100
 
-idx_2year = contains(IDs_BaselineUnmedicated_L1trend,IDs_BaselineUnmedicated_statistics);
+idx_followup = contains(IDs_BaselineUnmedicated_L1trend,IDs_BaselineUnmedicated_statistics);
 last_week_idx = 51;
-weights_2year = weights(idx_2year,last_week_idx);
+weights_followup = weights(idx_followup,last_week_idx);
 
 for k = 1:length(UPDRS_names)
 
-    UPDRS_score3 = eval([UPDRS_names{k} '_3']);
-    UPDRS_score1 = eval([UPDRS_names{k} '_1']);
+    UPDRS_score_followup = eval([UPDRS_names{k} '_3']);
+    UPDRS_score_baseline = eval([UPDRS_names{k} '_1']);
 
-    change = (UPDRS_score3-UPDRS_score1)';
+    change = (UPDRS_score_followup-UPDRS_score_baseline)';
 
-    weighted_SRM_UPDRS_unmedicated(k) = weighted_SRM_function(change,weights_2year);
-    [weighted_CI_UPDRS_unmedicated(k,1:2), bootstat_UPDRS_unmedicated(:,k)] = bootci(10000,{weighted_SRM_function,change,weights_2year});
+    weighted_SRM_UPDRS_unmedicated(k) = weighted_SRM_function(change,weights_followup);
+    [weighted_CI_UPDRS_unmedicated(k,1:2), bootstat_UPDRS_unmedicated(:,k)] = bootci(10000,{weighted_SRM_function,change,weights_followup});
 
     % SRM_UPDRS_unmedicated(k) = mean(UPDRS_score3-UPDRS_score1,'omitnan')/std(UPDRS_score3-UPDRS_score1,'omitnan');
     % CI_UPDRS_unmedicated(k,1:2) = bootci(10000,SRM_function,UPDRS_score3 - UPDRS_score1);
 
-    N_UPDRS_unmedicated(k) = length(find(~isnan(UPDRS_score3) & ~isnan(UPDRS_score1) & ~isnan(weights_2year')));
-    Bootstrap_IDs{k} = IDs_BaselineUnmedicated_statistics(~isnan(UPDRS_score3) & ~isnan(UPDRS_score1) & ~isnan(weights_2year'));
+    N_UPDRS_unmedicated(k) = length(find(~isnan(UPDRS_score_followup) & ~isnan(UPDRS_score_baseline) & ~isnan(weights_followup')));
+    Bootstrap_IDs{k} = IDs_BaselineUnmedicated_statistics(~isnan(UPDRS_score_followup) & ~isnan(UPDRS_score_baseline) & ~isnan(weights_followup'));
 
 end
 
@@ -696,7 +688,7 @@ for k = 1:length(UPDRS_names)
 
     change = data(idx,last_week_idx) - data(idx,first_week_idx);
 
-    weights_boostrap = weights_2year(ismember(IDs_BaselineUnmedicated_statistics,Bootstrap_IDs{k}));
+    weights_boostrap = weights_followup(ismember(IDs_BaselineUnmedicated_statistics,Bootstrap_IDs{k}));
     % weights_boostrap = weights_2year;
 
     weighted_SRM_sensor_unmedicated(k) = weighted_SRM_function(change,weights_boostrap);

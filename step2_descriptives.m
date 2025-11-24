@@ -477,6 +477,9 @@ BaselineUnmedicated.UPDRS_devside_tremor_OFF = UPDRS_devside_tremor_OFF';
 
 BaselineUnmedicated = struct2table(BaselineUnmedicated);
 
+%% Save descriptives
+save('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Descriptives.mat',"BaselineUnmedicated","BaselineMedicated")
+
 %% Age
 median(BaselineMedicated.Age)
 prctile(BaselineMedicated.Age,25)

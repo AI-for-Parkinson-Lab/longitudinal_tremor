@@ -8,11 +8,7 @@ clear all; close all;
 load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_filled.mat')
 load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat'); 
 
-%% Select participants with tremor
-IDs_BaselineMedicated_tremor = IDs_BaselineMedicated(all(~isnan(trend_modal_tremor_power_medicated_filled(1:length(IDs_BaselineMedicated),[2 51])),2)); % Change index for one- or two-year group
-IDs_BaselineUnmedicated_tremor = IDs_BaselineUnmedicated(all(~isnan(trend_modal_tremor_power_unmedicated_filled(:,[2 51])),2)); % Change index for one- or two-year group
-
-% Select tremor time data above the false positive threshold
+%% Select tremor time data above the false positive threshold
 trend_tremor_time_unmedicated_filled_above_threshold = trend_tremor_time_unmedicated_filled;
 trend_tremor_time_unmedicated_filled_above_threshold(isnan(trend_modal_tremor_power_unmedicated_filled))=NaN;
 trend_tremor_time_medicated_filled_above_threshold = trend_tremor_time_medicated_filled;
@@ -170,96 +166,3 @@ ylim([-0.5 1])
 xlim([0 100])
 legend('median', 'IQR')
 title('Unmedicated tremor group')
-
-%% Plot SRM over time (medicated group)
-addpath(genpath('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression'))
-SRM_function = @(x)mean(x,'omitnan')/std(x,'omitnan');
-
-tremor_time_logit = real(logit(trend_tremor_time_medicated_filled));
-% data = tremor_time_logit;
-data = trend_modal_tremor_power_medicated_filled;
-first_week_idx = 2;
-last_week_idxs = 3:51;
-
-idx = contains([IDs_BaselineMedicated; IDs_StartMedication],IDs_BaselineMedicated);
-
-SRM_sensor_medicated = [];
-CI_sensor_medicated = [];
-N_sensor_medicated = [];
-
-for m = 1:length(last_week_idxs)
-    last_week_idx = last_week_idxs(m);
-    
-    SRM_sensor_medicated(m) = mean(data(idx,last_week_idx) - data(idx,first_week_idx),'omitnan')/std(data(idx,last_week_idx) - data(idx,first_week_idx),'omitnan');
-    CI_sensor_medicated(m,1:2) = bootci(10000,SRM_function,data(idx,last_week_idx) - data(idx,first_week_idx));
-    N_sensor_medicated(m) = length(find(~isnan(data(idx,last_week_idx)) & ~isnan(data(idx,first_week_idx))));
-
-end
-
-week_vector = 0:2:104;
-Xband = [2:2:98 98:-2:2];
-
-figure(); hold on;
-plot(week_vector(last_week_idxs)-2,SRM_sensor_medicated,'.-',Color='k')
-upperband = CI_sensor_medicated(:,2)';
-fill(Xband,[CI_sensor_medicated(:,1)' upperband(end:-1:1)],'k','FaceAlpha',0.2,'EdgeColor','none')
-yline(0,'--')
-ylabel('SRM with 95%-CI')
-ylim([-1 2])
-xlabel('Weeks since baseline')
-% title('Medicated group')
-
-%% Plot SRM over time (unmedicated group)
-addpath(genpath('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression'))
-
-weighted_SRM_function = @(change, weights) ...
-    (sum(weights .* change, 'omitnan') / sum(weights, 'omitnan')) / ...
-    sqrt(sum(weights .* (change - (sum(weights .* change, 'omitnan') / sum(weights, 'omitnan'))).^2, 'omitnan') / sum(weights, 'omitnan'));
-
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\v3_survival\IPCW.mat')
-weights = IPCW(:,2:end).Variables;
-weights = [ones(77,3) weights]; % The weights start at week 6, so add 3 columns of ones
-weights(:,51) = weights(:,50); % The weights don't change between week 98 and 100
-weights = weights(contains(IDs_BaselineUnmedicated_L1trend,IDs_BaselineUnmedicated_L1trend),:);
-
-idx = contains([IDs_StartMedication; IDs_AllUnmedicated],IDs_BaselineUnmedicated_L1trend);
-
-tremor_time_logit = real(logit(trend_tremor_time_unmedicated_filled));
-
-data = tremor_time_logit;
-
-% data = trend_modal_tremor_power_unmedicated_filled;
-first_week_idx = 2;
-last_week_idxs = 3:51;
-
-SRM_sensor_unmedicated = [];
-CI_sensor_unmedicated = [];
-N_sensor_unmedicated = [];
-
-for m = 1:length(last_week_idxs)
-
-    last_week_idx = last_week_idxs(m);
-
-    change = data(idx,last_week_idx) - data(idx,first_week_idx);
-    
-    weighted_SRM_sensor_unmedicated(m) = weighted_SRM_function(change,weights(:,m+2));
-    weighted_CI_sensor_unmedicated(m,1:2) = bootci(10000,{weighted_SRM_function,change,weights(:,m+2)});
-
-    % SRM_sensor_unmedicated(m) = mean(data(idx,last_week_idx) - data(idx,first_week_idx),'omitnan')/std(data(idx,last_week_idx) - data(idx,first_week_idx),'omitnan');
-    % CI_sensor_unmedicated(m,1:2) = bootci(10000,SRM_function,data(idx,last_week_idx) - data(idx,first_week_idx));
-
-    N_sensor_unmedicated(m) = length(find(~isnan(data(idx,last_week_idx)) & ~isnan(data(idx,first_week_idx))));
-end
-
-week_vector = 0:2:104;
-Xband = [2:2:98 98:-2:2];
-
-figure(); hold on;
-plot(week_vector(last_week_idxs)-2,weighted_SRM_sensor_unmedicated,'.-',Color='k')
-upperband = weighted_CI_sensor_unmedicated(:,2)';
-fill(Xband,[weighted_CI_sensor_unmedicated(:,1)' upperband(end:-1:1)],'k','FaceAlpha',0.2,'EdgeColor','none')
-yline(0,'--')
-ylabel('SRM with 95%-CI')
-ylim([-1 2])
-xlabel('Weeks since baseline')
-% title('Unmedicated group')
