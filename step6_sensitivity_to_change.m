@@ -54,7 +54,6 @@ UPDRS_210_3 = [];
 
 load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\visit_week_numbers.mat') % load visit week numbers
 
-
 for i = 1:length(IDs_BaselineMedicated)
     id = IDs_BaselineMedicated{i};
 
@@ -133,6 +132,7 @@ end
 addpath(genpath('utils'))
 tremor_time_logit = real(logit(trend_tremor_time_medicated_filled));
 
+% Select measures (tremor time for full group, all measures for tremor group)
 % sensor_names = {'tremor_time_logit','trend_modal_tremor_power_medicated_filled','trend_perc90_tremor_power_medicated_filled'};
 sensor_names = {'tremor_time_logit'};
 first_week_idx = 2;
@@ -280,7 +280,7 @@ weights = IPCW(:,2:end).Variables;
 weights = [ones(78,3) weights]; % The weights start at week 6, so add 3 columns of ones
 weights(:,51) = weights(:,50); % The weights don't change between week 98 and 100, duplicate to increase availability of weights
 
-idx_2year = contains(IDs_BaselineUnmedicated,IDs_BaselineUnmedicated);
+idx_2year = contains(IDs_BaselineUnmedicated,IDs_BaselineUnmedicated); % Select full group or tremor group
 last_week_idx = 26;
 weights_2year = weights(idx_2year,last_week_idx);
 
@@ -303,6 +303,7 @@ SRM_function = @(x)mean(x,'omitnan')/std(x,'omitnan');
 
 tremor_time_logit = real(logit(trend_tremor_time_unmedicated_filled));
 
+% Select measures (tremor time for full group, all measures for tremor group)
 % sensor_names = {'tremor_time_logit','trend_modal_tremor_power_unmedicated_filled','trend_perc90_tremor_power_unmedicated_filled'};
 sensor_names = {'tremor_time_logit'};
 first_week_idx = 2;

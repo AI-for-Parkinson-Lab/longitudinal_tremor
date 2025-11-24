@@ -1,36 +1,30 @@
+%% Step 5: Create group level figures 
+% Show the distribution of sensor-derived tremor measures, and the
+% distribution of individual changes in these measures over time
+
 clear all; close all;
 
-%% Load sensor data
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250523_L1trend\trends2.mat')
+%% Load sensor data and IDs
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_filled.mat')
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat'); 
+
+%% Select participants with tremor
+IDs_BaselineMedicated_tremor = IDs_BaselineMedicated(all(~isnan(trend_modal_tremor_power_medicated_filled(1:length(IDs_BaselineMedicated),[2 51])),2)); % Change index for one- or two-year group
+IDs_BaselineUnmedicated_tremor = IDs_BaselineUnmedicated(all(~isnan(trend_modal_tremor_power_unmedicated_filled(:,[2 51])),2)); % Change index for one- or two-year group
+
+% Select tremor time data above the false positive threshold
 trend_tremor_time_unmedicated_filled_above_threshold = trend_tremor_time_unmedicated_filled;
-trend_tremor_time_unmedicated_filled_above_threshold(isnan(trend_median_tremor_power_unmedicated_filled))=NaN;
+trend_tremor_time_unmedicated_filled_above_threshold(isnan(trend_modal_tremor_power_unmedicated_filled))=NaN;
 trend_tremor_time_medicated_filled_above_threshold = trend_tremor_time_medicated_filled;
-trend_tremor_time_medicated_filled_above_threshold(isnan(trend_median_tremor_power_medicated_filled))=NaN;
+trend_tremor_time_medicated_filled_above_threshold(isnan(trend_modal_tremor_power_medicated_filled))=NaN;
 
+%% Plot distribution over time for medicated group
 
-%% Load IDs
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250327_inclusion_exclusion\IDs.mat')
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250410_matching_info\IDs_BaselineMedicated_matched.mat')
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250523_l1trend\IDs_BaselineUnmedicated_L1trend.mat')
+idx = contains([IDs_BaselineMedicated; IDs_BaselineUnmedicated],IDs_BaselineMedicated);
 
-IDs_BaselineMedicated_complete = IDs_BaselineMedicated(all(~isnan(trend_tremor_time_medicated_filled(1:length(IDs_BaselineMedicated),[2 51])),2));
-IDs_BaselineMedicated_matched_complete = intersect(IDs_BaselineMedicated_complete,IDs_BaselineMedicated_matched);
-
-IDs_BaselineMedicated_tremor = IDs_BaselineMedicated(all(~isnan(trend_median_tremor_power_medicated_filled(1:length(IDs_BaselineMedicated),[2 51])),2));
-IDs_BaselineMedicated_matched_tremor = intersect(IDs_BaselineMedicated_tremor,IDs_BaselineMedicated_matched);
-IDs_BaselineMedicated_matched_notremor = setxor(IDs_BaselineMedicated_tremor,IDs_BaselineMedicated_matched);
-
-IDs_BaselineUnmedicated = [IDs_StartMedication; IDs_AllUnmedicated];
-IDs_BaselineUnmedicated_complete = IDs_BaselineUnmedicated(all(~isnan(trend_tremor_time_unmedicated_filled(:,[2 51])),2));
-
-IDs_BaselineUnmedicated_tremor = IDs_BaselineUnmedicated(all(~isnan(trend_median_tremor_power_unmedicated_filled(:,[2 51])),2));
-
-%% Plot distribution over time (medicated group)
-close all;
-
-idx = contains([IDs_BaselineMedicated; IDs_StartMedication],IDs_BaselineMedicated);
-measure = 100*trend_tremor_time_medicated_filled_above_threshold(idx,2:51);
-% measure = trend_perc90_tremor_power_medicated_filled(idx,2:51);
+% Select measure (and change axes labels and limits accordingly)
+% measure = 100*trend_tremor_time_medicated_filled(idx,2:51);
+measure = trend_perc90_tremor_power_medicated_filled(idx,2:51);
 N = sum(~isnan(measure))
 
 figure(); hold on;
@@ -41,48 +35,26 @@ fill(Xband,[prctile(measure,25) upperband(end:-1:1)],'k','FaceAlpha',0.3,'EdgeCo
 upperband = prctile(measure,90);
 fill(Xband,[prctile(measure,10) upperband(end:-1:1)],'k','FaceAlpha',0.2,'EdgeColor','none')
 xlabel('Weeks since baseline')
-ylabel('Tremor time (% of inactive time)')
-% ylabel('Modal tremor power (log values)')
-ylim([0 100])
-% ylim([0 4])
+% ylabel('Tremor time (% of inactive time)')
+ylabel('90th percentile of tremor power (log values)')
+% ylim([0 100])
+ylim([0 4])
 xlim([0 100])
 % legend('median', '25th-75th percentiles','10th-90th percentiles')
-title('Medicated group')
+title('Medicated tremor group')
 
-%% Plot delta progression (medicated group)
-% close all;
+%% Plot distribution over time for unmedicated group
 
-idx = contains([IDs_BaselineMedicated; IDs_StartMedication],IDs_BaselineMedicated);
-measure = logit(trend_tremor_time_medicated_filled_above_threshold(idx,3:51)) - logit(trend_tremor_time_medicated_filled_above_threshold(idx,2));
-% measure = trend_perc90_tremor_power_medicated_filled(idx,3:51) - trend_perc90_tremor_power_medicated_filled(idx,2);
-N = sum(~isnan(measure))
+addpath(genpath('utils'))
 
-figure(); hold on;
-Xband = [2:2:98 98:-2:2];
-plot(2:2:98,median(measure,'omitnan'),'.-k')
-upperband = prctile(measure,75);
-fill(Xband,[prctile(measure,25) upperband(end:-1:1)],'k','FaceAlpha',0.2,'EdgeColor','none')
-xlabel('Weeks since baseline')
-yline(0,'--')
-% ylabel('\Delta 90th percentile of tremor power (log values)')
-ylabel('\Delta tremor time (log odds-ratio)')
-ylim([-1 1.5])
-xlim([0 100])
-legend('median', 'IQR')
-title('Medicated group')
-
-%% Plot distribution over time  (unmedicated group)
-
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\v3_survival\IPCW.mat')
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IPCW.mat')
 weights = IPCW(:,2:end).Variables;
-weights = [ones(77,3) weights]; % The weights start at week 6, so add 3 columns of ones
-weights(:,51) = weights(:,50); % The weights don't change between week 98 and 100
+weights = [ones(78,3) weights]; % The weights start at week 6, so add 3 columns of ones
+weights(:,51) = weights(:,50); % The weights don't change between week 98 and 100, duplicate to increase availability of weights
 
-weights = weights(contains(IDs_BaselineUnmedicated_L1trend,IDs_BaselineUnmedicated_L1trend),:);
-
-idx = contains([IDs_StartMedication; IDs_AllUnmedicated],IDs_BaselineUnmedicated_L1trend);
-measure = 100*trend_tremor_time_unmedicated_filled_above_threshold(idx,2:51);
-% measure = trend_perc90_tremor_power_unmedicated_filled(idx,2:51);
+% Select measure (and change axes labels and limits accordingly)
+% measure = 100*trend_tremor_time_unmedicated_filled(:,2:51);
+measure = trend_perc90_tremor_power_unmedicated_filled(:,2:51);
 
 n = size(measure,2);
 medians = zeros(n, 1);
@@ -100,7 +72,6 @@ for i = 1:n
     outcome_t = outcome_t(valid);
     weights_t = weights_t(valid);
     
-    % percentiles = weighted_percentiles(outcome_t, weights_t, [10, 25, 50, 75, 90]);
     percentiles = wprctile(outcome_t,[10, 25, 50, 75, 90],weights_t);
     
     p10(i) = percentiles(1);
@@ -121,25 +92,42 @@ fill(Xband,[p25; upperband(end:-1:1)],'k','FaceAlpha',0.3,'EdgeColor','none')
 upperband = p90;
 fill(Xband,[p10; upperband(end:-1:1)],'k','FaceAlpha',0.2,'EdgeColor','none')
 xlabel('Weeks since baseline')
-ylabel('Tremor time (% of inactive time)')
-% ylabel('90th percentile of tremor power (log values)')
-ylim([0 100])
+% ylabel('Tremor time (% of inactive time)')
+ylabel('90th percentile of tremor power (log values)')
+% ylim([0 100])
+ylim([0 4])
 xlim([0 100])
 legend('median', '25th-75th percentiles','10th-90th percentiles')
-title('Unmedicated group')
+title('Unmedicated tremor group')
 
-%% Plot delta progression (unmedicated group)
+%% Plot change over time for medicated group
 
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\v3_survival\IPCW.mat')
-weights = IPCW(:,2:end).Variables;
-weights = [ones(77,3) weights]; % The weights start at week 6, so add 3 columns of ones
-weights(:,51) = weights(:,50); % The weights don't change between week 98 and 100
+idx = contains([IDs_BaselineMedicated; IDs_BaselineUnmedicated],IDs_BaselineMedicated);
 
-weights = weights(contains(IDs_BaselineUnmedicated_L1trend,IDs_BaselineUnmedicated_L1trend),:);
+% Select measure (and change axes labels and limits accordingly)
+% measure = logit(trend_tremor_time_medicated_filled_above_threshold(idx,3:51)) - logit(trend_tremor_time_medicated_filled_above_threshold(idx,2));
+measure = trend_modal_tremor_power_medicated_filled(idx,3:51) - trend_modal_tremor_power_medicated_filled(idx,2);
+N = sum(~isnan(measure))
 
-idx = contains([IDs_StartMedication; IDs_AllUnmedicated],IDs_BaselineUnmedicated_L1trend);
-% measure = trend_modal_tremor_power_unmedicated_filled(idx,3:end) -  trend_modal_tremor_power_unmedicated_filled(idx,2);
-measure = logit(trend_tremor_time_unmedicated_filled_above_threshold(idx,3:end)) - logit(trend_tremor_time_unmedicated_filled_above_threshold(idx,2));
+figure(); hold on;
+Xband = [2:2:98 98:-2:2];
+plot(2:2:98,median(measure,'omitnan'),'.-k')
+upperband = prctile(measure,75);
+fill(Xband,[prctile(measure,25) upperband(end:-1:1)],'k','FaceAlpha',0.2,'EdgeColor','none')
+xlabel('Weeks since baseline')
+yline(0,'--')
+ylabel('\Delta modal tremor power (log values)')
+% ylabel('\Delta tremor time (log odds-ratio)')
+ylim([-0.5 1])
+xlim([0 100])
+legend('median', 'IQR')
+title('Medicated tremor group')
+
+%% Plot change over time for unmedicated group
+
+% Select measure (and change axes labels and limits accordingly)
+measure = trend_perc90_tremor_power_unmedicated_filled(:,3:end) -  trend_perc90_tremor_power_unmedicated_filled(:,2);
+% measure = logit(trend_tremor_time_unmedicated_filled_above_threshold(:,3:end)) - logit(trend_tremor_time_unmedicated_filled_above_threshold(:,2));
 
 n = size(measure,2)-2;
 medians = zeros(n, 1);
@@ -157,7 +145,6 @@ for i = 1:n
     outcome_t = outcome_t(valid);
     weights_t = weights_t(valid);
     
-    % percentiles = weighted_percentiles(outcome_t, weights_t, [10, 25, 50, 75, 90]);
     percentiles = wprctile(outcome_t,[10, 25, 50, 75, 90],weights_t);
     
     p10(i) = percentiles(1);
@@ -177,12 +164,12 @@ upperband = p75;
 fill(Xband,[p25; upperband(end:-1:1)],'k','FaceAlpha',0.2,'EdgeColor','none')
 xlabel('Weeks since baseline')
 yline(0,'--')
-ylabel('\Delta tremor time (log odds-ratio)')
-% ylabel('\Delta modal of tremor power (log values)')
-ylim([-1 1.5])
+% ylabel('\Delta tremor time (log odds-ratio)')
+ylabel('\Delta 90th percentile of tremor power (log values)')
+ylim([-0.5 1])
 xlim([0 100])
 legend('median', 'IQR')
-title('Unmedicated group')
+title('Unmedicated tremor group')
 
 %% Plot SRM over time (medicated group)
 addpath(genpath('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression'))
