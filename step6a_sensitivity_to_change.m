@@ -365,15 +365,11 @@ line([0, 0], ylim, 'Color', 'k', 'LineStyle', '--', 'LineWidth', 1);
 
 hold off;
 
-%%  Select participants 
-% IDs_BaselineUnmedicated_statistics = IDs_AllUnmedicated(~isnan(trend_tremor_time_unmedicated_filled(ismember(IDs_BaselineUnmedicated,IDs_AllUnmedicated),2)) ...
-%     & ~isnan(trend_tremor_time_unmedicated_filled(ismember(IDs_BaselineUnmedicated,IDs_AllUnmedicated),51)));
-% % IDs_BaselineUnmedicated_statistics = IDs_1year_unmedicated(~isnan(trend_tremor_time_unmedicated_filled(ismember(IDs_BaselineUnmedicated,IDs_1year_unmedicated),2)) ...
-% %     & ~isnan(trend_tremor_time_unmedicated_filled(ismember(IDs_BaselineUnmedicated,IDs_1year_unmedicated),26)));
-% IDs_BaselineUnmedicated_statistics_tremor = intersect(IDs_BaselineUnmedicated_statistics,IDs_BaselineUnmedicated_tremor,'stable');
-% IDs_BaselineMedicated_statistics = IDs_BaselineMedicated(~isnan(trend_tremor_time_medicated_filled(1:length(IDs_BaselineMedicated),2)) ...
-%     & ~isnan(trend_tremor_time_medicated_filled(1:length(IDs_BaselineMedicated),26)));
-% IDs_BaselineMedicated_statistics_tremor =  intersect(IDs_BaselineMedicated_statistics,IDs_BaselineMedicated_tremor,'stable');
+%% Compare SRMs of sensor-derived measures with SRMs of UPDRS scores
+
+% Select participants 
+IDs_BaselineMedicated_complete = IDs_BaselineMedicated(all(~isnan(trend_tremor_time_medicated_filled(1:length(IDs_BaselineMedicated),[2 51])),2)); % Change index for one- or two-year group
+IDs_BaselineMedicated_tremor = IDs_BaselineMedicated(all(~isnan(trend_modal_tremor_power_medicated_filled(1:length(IDs_BaselineMedicated),[2 51])),2)); 
 
 %% Extract UPDRS scores baseline medicated group
 
@@ -454,62 +450,58 @@ end
 
 %% Determine SRM of UPDRS scores
 SRM_function = @(x)mean(x,'omitnan')/std(x,'omitnan');
+
 UPDRS_names = {'UPDRS_317OFF','UPDRS_318OFF','UPDRS_317ON','UPDRS_318ON','UPDRS_210'};
 
-SRM_UPDRS_medicated = [];
-CI_UPDRS_medicated = [];
-N_UPDRS_medicated = [];
-
 bootstat_UPDRS_medicated = [];
+N_UPDRS_medicated = [];
 Bootstrap_IDs = cell(1, length(UPDRS_names));  
 
 for k = 1:length(UPDRS_names)
-    UPDRS_score_followup = eval([UPDRS_names{k} '_2']); % score 2 or 3
+    UPDRS_score_followup = eval([UPDRS_names{k} '_3']); % score 2 or 3
     UPDRS_score_baseline = eval([UPDRS_names{k} '_1']);
 
-    SRM_UPDRS_medicated(k) = mean(UPDRS_score_followup-UPDRS_score_baseline,'omitnan')/std(UPDRS_score_followup-UPDRS_score_baseline,'omitnan');
-    [CI_UPDRS_medicated(k,1:2), bootstat_UPDRS_medicated(:,k)] = bootci(10000,SRM_function,UPDRS_score_followup - UPDRS_score_baseline);
+    [~, bootstat_UPDRS_medicated(:,k)] = bootci(10000,SRM_function,UPDRS_score_followup - UPDRS_score_baseline);
 
     N_UPDRS_medicated(k) = length(find(~isnan(UPDRS_score_followup) & ~isnan(UPDRS_score_baseline)));
-    % Bootstrap_IDs{k} = IDs_BaselineMedicated_statistics(~isnan(UPDRS_score3) & ~isnan(UPDRS_score1)); 
+    Bootstrap_IDs{k} = IDs_BaselineMedicated_tremor(~isnan(UPDRS_score_followup) & ~isnan(UPDRS_score_baseline)); 
 
 end
 
 %% Determine SRM of sensor data
-addpath(genpath('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression'))
-SRM_function = @(x)mean(x,'omitnan')/std(x,'omitnan');
 
 tremor_time_logit = real(logit(trend_tremor_time_medicated_filled));
+
 sensor_names = {'tremor_time_logit','trend_modal_tremor_power_medicated_filled','trend_perc90_tremor_power_medicated_filled'};
-% sensor_names = {'tremor_time_logit'};
 first_week_idx = 2;
-last_week_idx = 26; % Modify for one- or two-year follow-up
+last_week_idx = 51; % Modify for one- or two-year follow-up
 
-idx = contains([IDs_BaselineMedicated; IDs_StartMedication],IDs_AllUnmedicated);
-
-SRM_sensor_medicated = [];
-CI_sensor_medicated = [];
 N_sensor_medicated = [];
 bootstat_sensor_medicated = [];
 
-for k = 1:length(sensor_names)
-% for k = 1:length(UPDRS_names)
+for k = 1:length(UPDRS_names)
     
-    % idx = contains([IDs_BaselineMedicated; IDs_StartMedication],Bootstrap_IDs{k});
+    idx = contains([IDs_BaselineMedicated; IDs_BaselineUnmedicated],Bootstrap_IDs{k});
 
-    data = eval(sensor_names{1});
+    data = eval(sensor_names{3}); % Select measure
     
-    SRM_sensor_medicated(k) = mean(data(idx,last_week_idx) - data(idx,first_week_idx),'omitnan')/std(data(idx,last_week_idx) - data(idx,first_week_idx),'omitnan');
-    [CI_sensor_medicated(k,1:2) bootstat_sensor_medicated(:,k)] = bootci(10000,SRM_function,data(idx,last_week_idx) - data(idx,first_week_idx));
-
-    % SE_mean_diff_data_PPP = std(data(idx,last_week_idx) - data(idx,1),'omitnan')/sqrt(length(find(~isnan(data(idx,last_week_idx))==1 & ~isnan(data(idx,1))==1)));
-    % CI_sensor_data_low_PPP(k) = (mean(data(idx,last_week_idx) - data(idx,1),'omitnan')-1.96*SE_mean_diff_data_PPP)/std(data(idx,last_week_idx) - data(idx,1),'omitnan');
-    % CI_sensor_data_high_PPP(k) = (mean(data(idx,last_week_idx) - data(idx,1),'omitnan')+1.96*SE_mean_diff_data_PPP)/std(data(idx,last_week_idx) - data(idx,1),'omitnan');
-
+    [~, bootstat_sensor_medicated(:,k)] = bootci(10000,SRM_function,data(idx,last_week_idx) - data(idx,first_week_idx));
     N_sensor_medicated(k) = length(find(~isnan(data(idx,last_week_idx)) & ~isnan(data(idx,first_week_idx))));
 end
 
-%% Extract UPDRS scores unmedicated group (no ON assessment) and disease duration
+%% Assess mean and 95%-CI of difference
+
+diff_boot = bootstat_sensor_medicated - bootstat_UPDRS_medicated;
+UPDRS_names
+N_sensor_medicated
+effect_size = mean(diff_boot,'omitnan')
+CI_effect_size = prctile(diff_boot, [2.5, 97.5])
+
+%% Extract UPDRS scores unmedicated group (no ON assessment) 
+
+IDs_BaselineUnmedicated_complete = IDs_BaselineUnmedicated(all(~isnan(trend_tremor_time_unmedicated_filled(:,[2 51])),2)); 
+IDs_BaselineUnmedicated_tremor = IDs_BaselineUnmedicated(all(~isnan(trend_modal_tremor_power_unmedicated_filled(:,[2 51])),2));
+
 UPDRS_317OFF_1 = [];
 UPDRS_318OFF_1 = [];
 UPDRS_210_1 = [];
@@ -522,8 +514,8 @@ UPDRS_210_3 = [];
 
 load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250327_inclusion_exclusion\visit_week_numbers.mat')
 
-for i = 1:length(IDs_BaselineUnmedicated_statistics)
-    id = IDs_BaselineUnmedicated_statistics{i};
+for i = 1:length(IDs_BaselineUnmedicated_tremor)
+    id = IDs_BaselineUnmedicated_tremor{i};
 
     if ~isempty(find(contains(Visit1PPP.id,id)))
 
@@ -625,20 +617,16 @@ weighted_SRM_function = @(change, weights) ...
 
 UPDRS_names = {'UPDRS_317OFF','UPDRS_318OFF','UPDRS_210'};
 
-SRM_UPDRS_unmedicated = [];
-CI_UPDRS_unmedicated = [];
-N_UPDRS_unmedicated = [];
-weighted_SRM_UPDRS_unmedicated = [];
-weighted_CI_UPDRS_unmedicated = [];
 bootstat_UPDRS_unmedicated = [];
 Bootstrap_IDs = cell(1, length(UPDRS_names));  
+N_UPDRS_unmedicated = [];
 
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\v3_survival\IPCW.mat')
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IPCW.mat')
 weights = IPCW(:,2:end).Variables;
-weights = [ones(77,3) weights]; % The weights start at week 6, so add 3 columns of ones
-weights(:,51) = weights(:,50); % The weights don't change between week 98 and 100
+weights = [ones(78,3) weights]; % The weights start at week 6, so add 3 columns of ones
+weights(:,51) = weights(:,50); % The weights don't change between week 98 and 100, duplicate to increase availability of weights
 
-idx_followup = contains(IDs_BaselineUnmedicated_L1trend,IDs_BaselineUnmedicated_statistics);
+idx_followup = contains(IDs_BaselineUnmedicated,IDs_BaselineUnmedicated_tremor);
 last_week_idx = 51;
 weights_followup = weights(idx_followup,last_week_idx);
 
@@ -649,77 +637,43 @@ for k = 1:length(UPDRS_names)
 
     change = (UPDRS_score_followup-UPDRS_score_baseline)';
 
-    weighted_SRM_UPDRS_unmedicated(k) = weighted_SRM_function(change,weights_followup);
-    [weighted_CI_UPDRS_unmedicated(k,1:2), bootstat_UPDRS_unmedicated(:,k)] = bootci(10000,{weighted_SRM_function,change,weights_followup});
-
-    % SRM_UPDRS_unmedicated(k) = mean(UPDRS_score3-UPDRS_score1,'omitnan')/std(UPDRS_score3-UPDRS_score1,'omitnan');
-    % CI_UPDRS_unmedicated(k,1:2) = bootci(10000,SRM_function,UPDRS_score3 - UPDRS_score1);
+    [~, bootstat_UPDRS_unmedicated(:,k)] = bootci(10000,{weighted_SRM_function,change,weights_followup});
 
     N_UPDRS_unmedicated(k) = length(find(~isnan(UPDRS_score_followup) & ~isnan(UPDRS_score_baseline) & ~isnan(weights_followup')));
-    Bootstrap_IDs{k} = IDs_BaselineUnmedicated_statistics(~isnan(UPDRS_score_followup) & ~isnan(UPDRS_score_baseline) & ~isnan(weights_followup'));
+    Bootstrap_IDs{k} = IDs_BaselineUnmedicated_tremor(~isnan(UPDRS_score_followup) & ~isnan(UPDRS_score_baseline) & ~isnan(weights_followup'));
 
 end
 
 %% Determine SRM of sensor data
-addpath(genpath('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression'))
-
-SRM_function = @(x)mean(x,'omitnan')/std(x,'omitnan');
 
 tremor_time_logit = real(logit(trend_tremor_time_unmedicated_filled));
+
 sensor_names = {'tremor_time_logit','trend_modal_tremor_power_unmedicated_filled','trend_perc90_tremor_power_unmedicated_filled'};
-% sensor_names = {'tremor_time_logit'};
 first_week_idx = 2;
 last_week_idx = 51;
 
-% idx = contains([IDs_StartMedication; IDs_AllUnmedicated],IDs_BaselineUnmedicated_statistics);
-
-weighted_SRM_sensor_unmedicated = [];
-weighted_CI_sensor_unmedicated = [];
-SRM_sensor_unmedicated = [];
-CI_sensor_unmedicated = [];
 N_sensor_unmedicated = [];
 bootstat_sensor_unmedicated = [];
 
 for k = 1:length(UPDRS_names)
-    % data = eval(sensor_names{k});
-    data = eval(sensor_names{1});
 
-    idx = contains([IDs_StartMedication; IDs_AllUnmedicated],Bootstrap_IDs{k});
+    data = eval(sensor_names{3}); % Select measure
+
+    idx = contains(IDs_BaselineUnmedicated,Bootstrap_IDs{k});
 
     change = data(idx,last_week_idx) - data(idx,first_week_idx);
 
-    weights_boostrap = weights_followup(ismember(IDs_BaselineUnmedicated_statistics,Bootstrap_IDs{k}));
-    % weights_boostrap = weights_2year;
+    weights_boostrap = weights_followup(ismember(IDs_BaselineUnmedicated_tremor,Bootstrap_IDs{k}));
 
-    weighted_SRM_sensor_unmedicated(k) = weighted_SRM_function(change,weights_boostrap);
-    [weighted_CI_sensor_unmedicated(k,1:2), bootstat_sensor_unmedicated(:,k)] = bootci(10000,{weighted_SRM_function,change,weights_boostrap});
+    [~, bootstat_sensor_unmedicated(:,k)] = bootci(10000,{weighted_SRM_function,change,weights_boostrap});
 
-    % SRM_sensor_unmedicated(k) = mean(data(idx,last_week_idx) - data(idx,first_week_idx),'omitnan')/std(data(idx,last_week_idx) - data(idx,first_week_idx),'omitnan');
-    % CI_sensor_unmedicated(k,1:2) = bootci(10000,SRM_function,data(idx,last_week_idx) - data(idx,first_week_idx));
-
-    % SE_mean_diff_data_PPP = std(data(idx,last_week_idx) - data(idx,1),'omitnan')/sqrt(length(find(~isnan(data(idx,last_week_idx))==1 & ~isnan(data(idx,1))==1)));
-    % CI_sensor_data_low_PPP(k) = (mean(data(idx,last_week_idx) - data(idx,1),'omitnan')-1.96*SE_mean_diff_data_PPP)/std(data(idx,last_week_idx) - data(idx,1),'omitnan');
-    % CI_sensor_data_high_PPP(k) = (mean(data(idx,last_week_idx) - data(idx,1),'omitnan')+1.96*SE_mean_diff_data_PPP)/std(data(idx,last_week_idx) - data(idx,1),'omitnan');
-
-    N_sensor_unmedicated(k) = length(find(~isnan(data(idx,last_week_idx)) & ~isnan(data(idx,first_week_idx)) & ~isnan(weights_boostrap)));
+     N_sensor_unmedicated(k) = length(find(~isnan(data(idx,last_week_idx)) & ~isnan(data(idx,first_week_idx)) & ~isnan(weights_boostrap)));
 end
 
-%% Testing significant difference
-% Step 1: Bootstrap difference
+%% Assess mean and 95%-CI of difference
+
 diff_boot = bootstat_sensor_unmedicated - bootstat_UPDRS_unmedicated;
-
-p_val = [];
-
-% Step 2: Compute one-tailed bootstrap p-value
-for i = 1:length(UPDRS_names)
-    p_val(i) = length(find(diff_boot(:,i) >= 0))/10000;
-end
-
-% Step 4: Display results
-fprintf('Bootstrap p-value: %.4f\n', p_val);
-
-p_val = p_val';
-
+N_sensor_unmedicated
 effect_size = mean(diff_boot,'omitnan')
 CI_effect_size = prctile(diff_boot, [2.5, 97.5])
 

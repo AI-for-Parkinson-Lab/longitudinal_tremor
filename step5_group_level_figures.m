@@ -20,7 +20,7 @@ idx = contains([IDs_BaselineMedicated; IDs_BaselineUnmedicated],IDs_BaselineMedi
 
 % Select measure (and change axes labels and limits accordingly)
 % measure = 100*trend_tremor_time_medicated_filled(idx,2:51);
-measure = trend_perc90_tremor_power_medicated_filled(idx,2:51);
+measure = trend_modal_tremor_power_medicated_filled(idx,2:51);
 N = sum(~isnan(measure))
 
 figure(); hold on;
@@ -32,7 +32,7 @@ upperband = prctile(measure,90);
 fill(Xband,[prctile(measure,10) upperband(end:-1:1)],'k','FaceAlpha',0.2,'EdgeColor','none')
 xlabel('Weeks since baseline')
 % ylabel('Tremor time (% of inactive time)')
-ylabel('90th percentile of tremor power (log values)')
+ylabel('Modal of tremor power (log values)')
 % ylim([0 100])
 ylim([0 4])
 xlim([0 100])

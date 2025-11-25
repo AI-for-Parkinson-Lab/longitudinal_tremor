@@ -413,7 +413,7 @@ hold off;
 %% Extract UPDRS scores unmedicated group (no ON assessment) 
 
 IDs_BaselineUnmedicated_tremor = IDs_BaselineUnmedicated(all(~isnan(trend_modal_tremor_power_unmedicated_filled(:,[2 26])),2)); % Change index for one- or two-year group
-
+load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\visit_week_numbers.mat')
 
 UPDRS_317OFF_1 = [];
 UPDRS_318OFF_1 = [];
@@ -425,8 +425,8 @@ UPDRS_317OFF_3 = [];
 UPDRS_318OFF_3 = [];
 UPDRS_210_3 = [];
 
-for i = 1:length(IDs_BaselineUnmedicated)
-    id = IDs_BaselineUnmedicated{i};
+for i = 1:length(IDs_BaselineUnmedicated_tremor)
+    id = IDs_BaselineUnmedicated_tremor{i};
 
     if ~isempty(find(contains(Visit1PPP.id,id)))
 
@@ -537,7 +537,7 @@ weights = IPCW(:,2:end).Variables;
 weights = [ones(78,3) weights]; % The weights start at week 6, so add 3 columns of ones
 weights(:,51) = weights(:,50); % The weights don't change between week 98 and 100, duplicate to increase availability of weights
 
-idx_followup = contains(IDs_BaselineUnmedicated,IDs_BaselineUnmedicated); % Select full group or tremor group
+idx_followup = contains(IDs_BaselineUnmedicated,IDs_BaselineUnmedicated_tremor); % Select full group or tremor group
 last_week_idx = 26;
 weights_followup = weights(idx_followup,last_week_idx);
 
@@ -558,12 +558,12 @@ end
 tremor_time_logit = real(logit(trend_tremor_time_unmedicated_filled));
 
 % Select measures (tremor time for full group, all measures for tremor group)
-% sensor_names = {'tremor_time_logit','trend_modal_tremor_power_unmedicated_filled','trend_perc90_tremor_power_unmedicated_filled'};
-sensor_names = {'tremor_time_logit'};
+sensor_names = {'tremor_time_logit','trend_modal_tremor_power_unmedicated_filled','trend_perc90_tremor_power_unmedicated_filled'};
+% sensor_names = {'tremor_time_logit'};
 first_week_idx = 2;
 last_week_idx = 26;
 
-idx = contains(IDs_BaselineUnmedicated,IDs_BaselineUnmedicated);
+idx = contains(IDs_BaselineUnmedicated,IDs_BaselineUnmedicated_tremor);
 
 weighted_SRM_sensor_unmedicated = [];
 weighted_CI_sensor_unmedicated = [];
@@ -590,7 +590,7 @@ unweighted_SRM_UPDRS_unmedicated = [];
 unweighted_CI_UPDRS_unmedicated = [];
 unweighted_N_UPDRS_unmedicated = [];
 
-idx_followup = contains(IDs_BaselineUnmedicated,IDs_BaselineUnmedicated);
+idx_followup = contains(IDs_BaselineUnmedicated,IDs_BaselineUnmedicated_tremor);
 last_week_idx = 26;
 weights_followup = weights(idx_followup,last_week_idx);
 
@@ -608,12 +608,12 @@ end
 %% Determine SRM of sensor data (unweighted)
 
 tremor_time_logit = real(logit(trend_tremor_time_unmedicated_filled));
-% sensor_names = {'tremor_time_logit','trend_modal_tremor_power_unmedicated_filled','trend_perc90_tremor_power_unmedicated_filled'};
-sensor_names = {'tremor_time_logit'};
+sensor_names = {'tremor_time_logit','trend_modal_tremor_power_unmedicated_filled','trend_perc90_tremor_power_unmedicated_filled'};
+% sensor_names = {'tremor_time_logit'};
 first_week_idx = 2;
 last_week_idx = 26;
 
-idx = contains(IDs_BaselineUnmedicated,IDs_BaselineUnmedicated);
+idx = contains(IDs_BaselineUnmedicated,IDs_BaselineUnmedicated_tremor);
 
 unweighted_SRM_sensor_unmedicated = [];
 unweighted_CI_sensor_unmedicated = [];
@@ -630,11 +630,11 @@ for k = 1:length(sensor_names)
 end
 
 %% Create forest plot
-% Names = {'rest tremor severity in OFF (unweighted', 'rest tremor severity in OFF (weighted','rest tremor constancy in OFF (unweighted','rest tremor constancy in OFF (weighted',...
-%     'patient-reported tremor (unweighted','patient-reported tremor (weighted','tremor time (unweighted','tremor time (weighted',...
-%     'modal tremor power (unweighted','modal tremor power (weighted','90th percentile of tremor power (unweighted','90th percentile of tremor power (weighted'}; % Study names]
 Names = {'rest tremor severity in OFF (unweighted', 'rest tremor severity in OFF (weighted','rest tremor constancy in OFF (unweighted','rest tremor constancy in OFF (weighted',...
-    'patient-reported tremor (unweighted','patient-reported tremor (weighted','tremor time (unweighted','tremor time (weighted'}; % Study names]
+    'patient-reported tremor (unweighted','patient-reported tremor (weighted','tremor time (unweighted','tremor time (weighted',...
+    'modal tremor power (unweighted','modal tremor power (weighted','90th percentile of tremor power (unweighted','90th percentile of tremor power (weighted'}; % Study names]
+% Names = {'rest tremor severity in OFF (unweighted', 'rest tremor severity in OFF (weighted','rest tremor constancy in OFF (unweighted','rest tremor constancy in OFF (weighted',...
+%     'patient-reported tremor (unweighted','patient-reported tremor (weighted','tremor time (unweighted','tremor time (weighted'}; % Study names]
 counts = [reshape([unweighted_N_UPDRS_unmedicated; weighted_N_UPDRS_unmedicated],1,[]) reshape([unweighted_N_sensor_unmedicated; weighted_N_sensor_unmedicated],1,[])];
 Names = strcat(Names, ", n = ", string(counts), ")");
 SRM = [reshape([unweighted_SRM_UPDRS_unmedicated; weighted_SRM_UPDRS_unmedicated],1,[]) reshape([unweighted_SRM_sensor_unmedicated; weighted_SRM_sensor_unmedicated],1,[])]; % Standardized Response Means
@@ -650,9 +650,9 @@ n = length(SRM);
 
 % Plot the confidence intervals
 for i = 1:n
-    if i == 7 || i == 8
-    % if i == 7 || i == 8 || i == 9 || i == 10 || i == 11 || i == 12
-        line([CI(i,1), CI(i,2)], [n-i+1, n-i+1], 'Color', 'r', 'LineWidth', 1.5); % CI line
+    % if i == 7 || i == 8
+    if i == 7 || i == 8 || i == 9 || i == 10 || i == 11 || i == 12
+        line([CI(i,1), CI(i,2)], [n-i+1, n-i+1], 'Color', C(2,:), 'LineWidth', 1.5); % CI line
         plot(SRM(i), n-i+1, 'ko', 'MarkerFaceColor', C(2,:), 'MarkerEdgeColor', C(2,:), 'MarkerSize', 6); % SRM point
     else
         line([CI(i,1), CI(i,2)], [n-i+1, n-i+1], 'Color', 'k', 'LineWidth', 1.5); % CI line
