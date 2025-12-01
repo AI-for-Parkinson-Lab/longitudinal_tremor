@@ -16,7 +16,7 @@ and improve readability:
 * `step8_regression_analysis.m`: Assess the effect of medication, disease duration and watch side on changes in sensor-derived tremor measures;
 * `step9_responsiveness_dopa_treatment_initiation.m`: Assess the responsiveness of sensor-derived tremor measures to dopaminergic treatment initiation;
 * 
-Note that, while executing `step4_IPCW.m`, we performed a survival analysis in R (see `Survival_analysis_tremor.R`) to estimate the probabilities to remain unmedicated (uncensored) for each participant.
+Note that, while executing `step4_IPCW.m`, we performed a survival analysis in R (see `Survival_analysis_tremor.R`) to estimate the probability to remain unmedicated (uncensored) for each participant.
 Based on these probabilites, inverse probability-of-censoring weights were computed in `step4_IPCW.m`.
 
 ## Contact
