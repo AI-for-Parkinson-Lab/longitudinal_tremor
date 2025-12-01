@@ -37,7 +37,7 @@ Inclusion.ID = [Visit1PPP.id; Visit1DeNovo.id];
 Inclusion = struct2table(Inclusion);
 Inclusion.Group = [repmat({'PPP'},length(Visit1PPP.id),1); repmat({'DeNovo'},length(Visit1DeNovo.id),1)];
 
-%% Exclude alternative diagnosis
+%% Exclude alternative diagnosis (according to neurologist, or according to patient if data from neurologist was missing)
 
 NonPDsubjects = {'POMU04E638F5EC3A95C0','POMU065F753B3E97FF42','POMU10F33F607BAF7942','POMU4861269DC8E779A6','POMU584ADDDA24B571C1',...
     'POMU785C84D79EA74864','POMU7C7AE0CD7DBDF0E2','POMU8AAE6ADB5A1BE3C6','POMUA20B1A38DFC93AEB','POMUA2EA522320DEB7B4','POMUC27BD4A6AF046175'...
@@ -180,9 +180,9 @@ end
 
 % Then add start week
 
-% For PPP:
+% For PPP (start week was extracted from PEP column Castor.MedChanges.Medicatie.Medicatie_voor_de_ziekte_van_Parkinson):
 Inclusion.StartWeek(ismember(Inclusion.ID,'POMU048E610B74CC7A47')) = 24;
-Inclusion.StartWeek(ismember(Inclusion.ID,'POMU30163E78B5A9CCAB')) = 121; % starts 121 weeks after visit 1 (and visit 3 is in that week)
+Inclusion.StartWeek(ismember(Inclusion.ID,'POMU30163E78B5A9CCAB')) = 121; 
 Inclusion.StartWeek(ismember(Inclusion.ID,'POMU382082A2F77477DE')) = 14;
 Inclusion.StartWeek(ismember(Inclusion.ID,'POMU3CB991DD7E324AE6')) = 18;
 Inclusion.StartWeek(ismember(Inclusion.ID,'POMU42C333778EDD7E88')) = 4;
@@ -191,6 +191,7 @@ Inclusion.StartWeek(ismember(Inclusion.ID,'POMU6A4763DC58628F76')) = 34;
 Inclusion.StartWeek(ismember(Inclusion.ID,'POMU8A79BAF84EA7AAA9')) = 61;
 Inclusion.StartWeek(ismember(Inclusion.ID,'POMU947ACDE0DB8BD887')) = 103;
 
+% For De Novo (start week was extracted from PEP column DeNovo.MedicationStartSinceVisit1):
 start_week_denovo = readtable('C:\Users\z835211\Documents\Data\DeNovo\start_week_denovo.csv');
 
 for i = size(Visit1PPP,1)+1:size(Inclusion,1)
