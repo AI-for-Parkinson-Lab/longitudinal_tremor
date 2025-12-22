@@ -1,5 +1,5 @@
 # Longitudinal tremor
-This repository contains code related to the scientific publication: <b>'Daily-life tremor measures are sensitive to progression in early Parkinson disease'</b>.
+This repository contains code related to the scientific publication: <b>'Progression of daily-life tremor measures in early Parkinson disease: a longitudinal continuous monitoring study'</b>.
 
 ## Overview
 The repository contains code to transform weekly tremor measures into results presented in the scientific publication. The Matlab scripts are enumerated to ensure proper serial execution
