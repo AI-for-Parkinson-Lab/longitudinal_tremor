@@ -125,14 +125,14 @@ for i = 1:length(IDs_BaselineMedicated)
     if ~isempty(find(ismember(LEDDPPP.id,id)))
         
         if LEDDPPP.Visit1_missing_med(ismember(LEDDPPP.id,id))>0
-            LEDD_visit1(i) = 0;
+            LEDD_visit1(i) = NaN;
         else
             LEDD_visit1(i) = LEDDPPP.Visit1(ismember(LEDDPPP.id,id));
         end
         visit2_week_number = cell2mat(visit_week_numbers.visit2(contains(visit_week_numbers.ID,id)));
         if visit2_week_number <= 60
             if LEDDPPP.Visit2_missing_med(ismember(LEDDPPP.id,id))>0
-                LEDD_visit2(i) = 0;
+                LEDD_visit2(i) = NaN;
             else
                 LEDD_visit2(i) = LEDDPPP.Visit2(ismember(LEDDPPP.id,id));
             end
@@ -144,7 +144,7 @@ for i = 1:length(IDs_BaselineMedicated)
 
         if visit3_week_number <= 120
             if LEDDPPP.Visit3_missing_med(ismember(LEDDPPP.id,id))>0
-                LEDD_visit3(i) = 0;
+                LEDD_visit3(i) = NaN;
             else
                 LEDD_visit3(i) = LEDDPPP.Visit3(ismember(LEDDPPP.id,id));
             end
@@ -158,7 +158,7 @@ for i = 1:length(IDs_BaselineMedicated)
     end
 end
 
-IDs_incorrect_baseline_LEDD = ['POMU066326B8F70E150E','POMU0A109E0D97672361','POMU428FEF5AA8B909DC','POMU6080FFB910C10DC3','POMUA249715D7C6FDE8F'];
+IDs_incorrect_baseline_LEDD = {'POMU066326B8F70E150E','POMU0A109E0D97672361','POMU428FEF5AA8B909DC','POMU6080FFB910C10DC3','POMUA249715D7C6FDE8F'};
 LEDD_visit1(ismember(IDs_BaselineMedicated,IDs_incorrect_baseline_LEDD)) = NaN;
 
 %% Compute 2-year changes
@@ -230,14 +230,22 @@ for i = 1:n
     m = m-1;
 end
 
+n_tremor_time = length(find(all(~isnan(Delta_standardized(:,[1 4 5 6])),2)));
+n_tremor_power = length(find(all(~isnan(Delta_standardized(:,[2 4 5 6])),2)));
+
 % Add labels
 yticks([2 6 10])
-yticklabels({'\Delta90th percentile of tremor power (n=122)','\Deltamodal tremor power (n=122)','\Deltatremor time (n=359)'})
+yticklabels({
+    sprintf('\\Delta 90th percentile of tremor power (n=%d)', n_tremor_power)
+    sprintf('\\Delta modal tremor power (n=%d)', n_tremor_power)
+    sprintf('\\Delta tremor time (n=%d)', n_tremor_time)
+})
 xline(0,'--')
 ylim([0 12])
 xlim([-0.5 0.5])
 xlabel('Standardized \beta coefficients with 95%-CI')
 legend({'\DeltaLEDD','','','','','','Disease duration','','','','','','Least-affected side'}')
+fontsize(12,'points')
 
 %% Scatterplot
 
@@ -258,5 +266,4 @@ text(70,0.3,'Increase in tremor time')
 text(70,-0.25,'Decrease in tremor time')
 ylabel('\Delta tremor time (log odds-ratio)')
 xlabel('Disease duration (months)')
-
-
+fontsize(12,'points')
