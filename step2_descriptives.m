@@ -2,16 +2,19 @@
 clear all; close all;
 
 %% Load IDs
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat'); % load selected IDs
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IDs_selected.mat'); % load selected IDs
 
 %% Load clinical data
-Visit1DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit1_DeNovo.csv");
-Visit2DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit2_DeNovo.csv");
-Visit3DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit3_DeNovo.csv");
 
-Visit1PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit1.csv");
-Visit2PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit2.csv");
-Visit3PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit3.csv");
+% De Novo data:
+Visit1DeNovo = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\Visit1_DeNovo.csv");
+Visit2DeNovo = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\Visit2_DeNovo.csv");
+Visit3DeNovo = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\Visit3_DeNovo.csv");
+
+% PPP data:
+Visit1PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit1.csv");
+Visit2PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit2.csv");
+Visit3PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit3.csv");
 
 % Convert IDs of PPP to same format
 ids = char(Visit1PPP.id);
@@ -30,6 +33,7 @@ Age = [];
 Gender = [];
 Disease_duration = [];
 Final_most_affected = [];
+Dominant_side = [];
 UPDRS1 = [];
 UPDRS2 = [];
 UPDRS3_OFF = [];
@@ -58,6 +62,7 @@ for i = 1:length(IDs_BaselineMedicated)
     
     Watchside(i) = Visit1.WatchSide(contains(Visit1.id,ppp_pep_number)); % side on which the watch is worn
     Most_affected_side(i) = Visit1.MostAffSide(contains(Visit1.id,ppp_pep_number));
+    Prefhand(i) = Visit1.PrefHand(contains(Visit1.id,ppp_pep_number));
 
     if Watchside(i) == 1 % right side
         
@@ -77,6 +82,14 @@ for i = 1:length(IDs_BaselineMedicated)
             Most_affected_subj(i)=2; % watch is worn on one of equally affected sides
         end
 
+        if Prefhand(i) == 1
+            Dominant_side(i) = 1;
+        elseif Prefhand(i) == 2
+            Dominant_side(i) = 0;
+        else
+            Dominant_side(i) = NaN;
+        end
+
     elseif Watchside(i) == 2 % left side
 
         NonWatchside_UPOf3 = [Visit1.Up3OfRigRue(contains(Visit1.id,ppp_pep_number)), Visit1.Up3OfRigRle(contains(Visit1.id,ppp_pep_number)),...
@@ -94,6 +107,15 @@ for i = 1:length(IDs_BaselineMedicated)
         elseif Most_affected_side(i) == 5 || Most_affected_side(i) == 6 % both side equally affected
             Most_affected_subj(i)=2; % watch is worn on one of equally affected sides
         end
+
+        if Prefhand(i) == 1
+            Dominant_side(i) = 0;
+        elseif Prefhand(i) == 2
+            Dominant_side(i) = 1;
+        else
+            Dominant_side(i) = NaN;
+        end
+
     end
 
     Watchside_UPOf3_total = sum(Watchside_UPOf3); % total UPDRS 3 OFF score on watchside
@@ -176,6 +198,7 @@ BaselineMedicated.Age = Age';
 BaselineMedicated.Gender = Gender';
 BaselineMedicated.Disease_duration = Disease_duration';
 BaselineMedicated.Most_affected = Final_most_affected';
+BaselineMedicated.Dominant_side = Dominant_side';
 BaselineMedicated.UPDRS1 = UPDRS1';
 BaselineMedicated.UPDRS2 = UPDRS2';
 BaselineMedicated.UPDRS3_OFF = UPDRS3_OFF';
@@ -191,12 +214,14 @@ Age = [];
 Gender = [];
 Disease_duration = [];
 Final_most_affected = [];
+Dominant_side = [];
 UPDRS1 = [];
 UPDRS2 = [];
 UPDRS3_OFF = [];
 UPDRS4 = [];
 UPDRS_tremor_OFF = [];
 UPDRS_devside_tremor_OFF = [];
+
 for i = 1:length(IDs_BaselineUnmedicated)
 
     ppp_pep_number = IDs_BaselineUnmedicated{i};
@@ -220,6 +245,7 @@ for i = 1:length(IDs_BaselineUnmedicated)
 
         Watchside(i) = Visit1.WatchSide(contains(Visit1.id,ppp_pep_number)); % side on which the watch is worn
         Most_affected_side(i) = Visit1.MostAffSide(contains(Visit1.id,ppp_pep_number));
+        Prefhand(i) = Visit1.PrefHand(contains(Visit1.id,ppp_pep_number));
 
         if Watchside(i) == 1 % right side
 
@@ -239,6 +265,14 @@ for i = 1:length(IDs_BaselineUnmedicated)
                 Most_affected_subj(i)=2; % watch is worn on one of equally affected sides
             end
 
+            if Prefhand(i) == 1
+                Dominant_side(i) = 1;
+            elseif Prefhand(i) == 2
+                Dominant_side(i) = 0;
+            else
+                Dominant_side(i) = NaN;
+            end
+
         elseif Watchside(i) == 2 % left side
 
             NonWatchside_UPOf3 = [Visit1.Up3OfRigRue(contains(Visit1.id,ppp_pep_number)), Visit1.Up3OfRigRle(contains(Visit1.id,ppp_pep_number)),...
@@ -256,6 +290,15 @@ for i = 1:length(IDs_BaselineUnmedicated)
             elseif Most_affected_side(i) == 5 || Most_affected_side(i) == 6 % both side equally affected
                 Most_affected_subj(i)=2; % watch is worn on one of equally affected sides
             end
+
+            if Prefhand(i) == 1
+                Dominant_side(i) = 0;
+            elseif Prefhand(i) == 2
+                Dominant_side(i) = 1;
+            else
+                Dominant_side(i) = NaN;
+            end
+
         end
 
         Watchside_UPOf3_total = sum(Watchside_UPOf3); % total UPDRS 3 OFF score on watchside
@@ -281,15 +324,15 @@ for i = 1:length(IDs_BaselineUnmedicated)
             Final_most_affected(i) = NaN;
         end
 
-            UPDRS1a = [Visit1.Up1aCognit(contains(Visit1.id,ppp_pep_number)), Visit1.Up1aHalPsy(contains(Visit1.id,ppp_pep_number)),...
-        Visit1.Up1aDepres(contains(Visit1.id,ppp_pep_number)), Visit1.Up1aAnxious(contains(Visit1.id,ppp_pep_number)),...
-        Visit1.Up1aApathy(contains(Visit1.id,ppp_pep_number)), Visit1.Up1aDopDysSyn(contains(Visit1.id,ppp_pep_number))];
-    UPDRS1a_visit1 = sum(UPDRS1a,2);
-    UPDRS1b = [Visit1.Updrs2It07(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It08(contains(Visit1.id,ppp_pep_number)),...
-        Visit1.Updrs2It09(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It10(contains(Visit1.id,ppp_pep_number)),...
-        Visit1.Updrs2It11(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It12(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It13(contains(Visit1.id,ppp_pep_number))];
-    UPDRS1b_visit1 = sum(UPDRS1b,2);
-    UPDRS1(i) = UPDRS1a_visit1 + UPDRS1b_visit1;
+        UPDRS1a = [Visit1.Up1aCognit(contains(Visit1.id,ppp_pep_number)), Visit1.Up1aHalPsy(contains(Visit1.id,ppp_pep_number)),...
+            Visit1.Up1aDepres(contains(Visit1.id,ppp_pep_number)), Visit1.Up1aAnxious(contains(Visit1.id,ppp_pep_number)),...
+            Visit1.Up1aApathy(contains(Visit1.id,ppp_pep_number)), Visit1.Up1aDopDysSyn(contains(Visit1.id,ppp_pep_number))];
+        UPDRS1a_visit1 = sum(UPDRS1a,2);
+        UPDRS1b = [Visit1.Updrs2It07(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It08(contains(Visit1.id,ppp_pep_number)),...
+            Visit1.Updrs2It09(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It10(contains(Visit1.id,ppp_pep_number)),...
+            Visit1.Updrs2It11(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It12(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It13(contains(Visit1.id,ppp_pep_number))];
+        UPDRS1b_visit1 = sum(UPDRS1b,2);
+        UPDRS1(i) = UPDRS1a_visit1 + UPDRS1b_visit1;
 
     UPDRS2_visit1 = [Visit1.Updrs2It14(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It15(contains(Visit1.id,ppp_pep_number)),...
         Visit1.Updrs2It16(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It17(contains(Visit1.id,ppp_pep_number)),...
@@ -350,6 +393,7 @@ for i = 1:length(IDs_BaselineUnmedicated)
 
         Watchside(i) = Visit1.WatchSide(contains(Visit1.id,ppp_pep_number)); % side on which the watch is worn
         Most_affected_side(i) = Visit1.MostAffSide(contains(Visit1.id,ppp_pep_number));
+        Prefhand(i) = Visit1.PrefHand(contains(Visit1.id,ppp_pep_number));
 
         if Watchside(i) == 1 % right side
 
@@ -369,6 +413,14 @@ for i = 1:length(IDs_BaselineUnmedicated)
                 Most_affected_subj(i)=2; % watch is worn on one of equally affected sides
             end
 
+            if Prefhand(i) == 1
+                Dominant_side(i) = 1;
+            elseif Prefhand(i) == 2
+                Dominant_side(i) = 0;
+            else
+                Dominant_side(i) = NaN;
+            end
+
         elseif Watchside(i) == 2 % left side
 
             NonWatchside_UPOf3 = [Visit1.Up3OfRigRue(contains(Visit1.id,ppp_pep_number)), Visit1.Up3OfRigRle(contains(Visit1.id,ppp_pep_number)),...
@@ -385,6 +437,14 @@ for i = 1:length(IDs_BaselineUnmedicated)
                 Most_affected_subj(i)=1; % watch is worn on patient reported least-affected side
             elseif Most_affected_side(i) == 5 || Most_affected_side(i) == 6 % both side equally affected
                 Most_affected_subj(i)=2; % watch is worn on one of equally affected sides
+            end
+
+            if Prefhand(i) == 1
+                Dominant_side(i) = 0;
+            elseif Prefhand(i) == 2
+                Dominant_side(i) = 1;
+            else
+                Dominant_side(i) = NaN;
             end
         end
 
@@ -411,15 +471,15 @@ for i = 1:length(IDs_BaselineUnmedicated)
             Final_most_affected(i) = NaN;
         end
 
-            UPDRS1a = [Visit1.Up1aCognit(contains(Visit1.id,ppp_pep_number)), Visit1.Up1aHalPsy(contains(Visit1.id,ppp_pep_number)),...
-        Visit1.Up1aDepres(contains(Visit1.id,ppp_pep_number)), Visit1.Up1aAnxious(contains(Visit1.id,ppp_pep_number)),...
-        Visit1.Up1aApathy(contains(Visit1.id,ppp_pep_number)), Visit1.Up1aDopDysSyn(contains(Visit1.id,ppp_pep_number))];
-    UPDRS1a_visit1 = sum(UPDRS1a,2);
-    UPDRS1b = [Visit1.Updrs2It07(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It08(contains(Visit1.id,ppp_pep_number)),...
-        Visit1.Updrs2It09(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It10(contains(Visit1.id,ppp_pep_number)),...
-        Visit1.Updrs2It11(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It12(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It13(contains(Visit1.id,ppp_pep_number))];
-    UPDRS1b_visit1 = sum(UPDRS1b,2);
-    UPDRS1(i) = UPDRS1a_visit1 + UPDRS1b_visit1;
+        UPDRS1a = [Visit1.Up1aCognit(contains(Visit1.id,ppp_pep_number)), Visit1.Up1aHalPsy(contains(Visit1.id,ppp_pep_number)),...
+            Visit1.Up1aDepres(contains(Visit1.id,ppp_pep_number)), Visit1.Up1aAnxious(contains(Visit1.id,ppp_pep_number)),...
+            Visit1.Up1aApathy(contains(Visit1.id,ppp_pep_number)), Visit1.Up1aDopDysSyn(contains(Visit1.id,ppp_pep_number))];
+        UPDRS1a_visit1 = sum(UPDRS1a,2);
+        UPDRS1b = [Visit1.Updrs2It07(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It08(contains(Visit1.id,ppp_pep_number)),...
+            Visit1.Updrs2It09(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It10(contains(Visit1.id,ppp_pep_number)),...
+            Visit1.Updrs2It11(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It12(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It13(contains(Visit1.id,ppp_pep_number))];
+        UPDRS1b_visit1 = sum(UPDRS1b,2);
+        UPDRS1(i) = UPDRS1a_visit1 + UPDRS1b_visit1;
 
     UPDRS2_visit1 = [Visit1.Updrs2It14(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It15(contains(Visit1.id,ppp_pep_number)),...
         Visit1.Updrs2It16(contains(Visit1.id,ppp_pep_number)),Visit1.Updrs2It17(contains(Visit1.id,ppp_pep_number)),...
@@ -468,6 +528,7 @@ BaselineUnmedicated.Age = Age';
 BaselineUnmedicated.Gender = Gender';
 BaselineUnmedicated.Disease_duration = Disease_duration';
 BaselineUnmedicated.Most_affected = Final_most_affected';
+BaselineUnmedicated.Dominant_side = Dominant_side';
 BaselineUnmedicated.UPDRS1 = UPDRS1';
 BaselineUnmedicated.UPDRS2 = UPDRS2';
 BaselineUnmedicated.UPDRS3_OFF = UPDRS3_OFF';
@@ -478,7 +539,7 @@ BaselineUnmedicated.UPDRS_devside_tremor_OFF = UPDRS_devside_tremor_OFF';
 BaselineUnmedicated = struct2table(BaselineUnmedicated);
 
 %% Save descriptives
-save('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Descriptives.mat',"BaselineUnmedicated","BaselineMedicated")
+save('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Descriptives.mat',"BaselineUnmedicated","BaselineMedicated")
 
 %% Age
 median(BaselineMedicated.Age)
@@ -568,8 +629,10 @@ prctile(BaselineUnmedicated.UPDRS_devside_tremor_OFF,25)
 prctile(BaselineUnmedicated.UPDRS_devside_tremor_OFF,75)
 
 %% Create survival curve (until treatment initiation)
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Inclusion.mat');
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Inclusion.mat');
 start_week = Inclusion.StartWeek(ismember(Inclusion.ID,IDs_BaselineUnmedicated));
+start_week(mod(start_week,2)>0) = start_week(mod(start_week,2)>0) + 1;
+
 n = length(start_week);
 
 % Sort weeks
@@ -581,9 +644,20 @@ sortedWeeks = sort(start_week);
 numRemaining = n - cumsum(counts);
 
 % Plot
-figure;
-stairs([0; uniqueWeeks-1], [n; numRemaining],'k', 'LineWidth', 1.5);
+figure; hold on;
+stairs([0; uniqueWeeks], [n; numRemaining],'k', 'LineWidth', 0.5);
+stairs(0:2:100,sum(~isnan(trend_tremor_time_unmedicated_filled(:,1:51))),'k', 'LineWidth', 1.5);
 xlabel('Weeks since baseline');
-ylabel('Number of participants in unmedicated group');
+ylabel('Number of participants');
+legend('Unmedicated participants','Unmedicated participants with available sensor data')
 ylim([0 80])
+xlim([0 100])
+
+%%
+% Plot
+figure; hold on;
+stairs(0:2:100,sum(~isnan(trend_tremor_time_medicated_filled(1:462,1:51))),'k', 'LineWidth', 1.5);
+xlabel('Weeks since baseline');
+ylabel('Number of participants in medicated group');
+ylim([0 500])
 xlim([0 100])

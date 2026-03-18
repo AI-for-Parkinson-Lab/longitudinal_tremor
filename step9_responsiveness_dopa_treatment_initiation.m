@@ -2,9 +2,9 @@
 clear all; close all;
 
 %% Load sensor data and IDs
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_filled.mat')
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat'); 
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Inclusion.mat');
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Trends_filled.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IDs_selected.mat'); 
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Inclusion.mat');
 start_week = Inclusion.StartWeek(ismember(Inclusion.ID,IDs_BaselineUnmedicated));
 
 %% Analysis of start medication group

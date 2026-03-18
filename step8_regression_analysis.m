@@ -3,14 +3,15 @@
 clear all; close all;
 
 %% Load sensor data and IDs
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_filled.mat')
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat'); 
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\visit_week_numbers.mat') % load visit week numbers
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Trends_filled.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IDs_selected.mat'); 
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\visit_week_numbers.mat') % load visit week numbers
 
 %% Load clinical data (only data from PPP as only the baseline medicated participants are used)
-Visit1PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit1.csv");
-Visit2PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit2.csv");
-Visit3PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit3.csv");
+% PPP data:
+Visit1PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit1.csv");
+Visit2PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit2.csv");
+Visit3PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit3.csv");
 
 % Convert IDs of PPP to same format
 ids = char(Visit1PPP.id);
@@ -116,7 +117,7 @@ MonthSinceDiag(MonthSinceDiag<0) = NaN;
 LEDD_visit1 = [];
 LEDD_visit2 = [];
 LEDD_visit3 = [];
-LEDDPPP = readtable("C:\Users\z835211\Documents\Data\PPP\Medication\LEDD_PPP.csv");
+LEDDPPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\LEDD_PPP.csv");
 
 for i = 1:length(IDs_BaselineMedicated)
 

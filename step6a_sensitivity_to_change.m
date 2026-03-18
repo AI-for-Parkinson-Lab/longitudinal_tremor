@@ -5,19 +5,45 @@
 clear all; close all;
 
 %% Load sensor data and IDs
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_filled.mat')
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat'); 
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Inclusion.mat');
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Trends_filled.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IDs_selected.mat'); 
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Inclusion.mat');
 start_week = Inclusion.StartWeek(ismember(Inclusion.ID,IDs_BaselineUnmedicated));
 
-%% Load clinical data
-Visit1DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit1_DeNovo.csv");
-Visit2DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit2_DeNovo.csv");
-Visit3DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit3_DeNovo.csv");
+%%
+start_week(mod(start_week,2)>0) = start_week(mod(start_week,2)>0) + 1;
+for i = 1:78
+    if start_week(i)==inf
+        week_idx = 50;
+    else
+        week_idx = find(weeks==start_week(i))-1;
+    end
+    if isnan(trend_tremor_time_unmedicated_filled(i,week_idx))
+        i
+    end
+end
 
-Visit1PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit1.csv");
-Visit2PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit2.csv");
-Visit3PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit3.csv");
+
+%%
+included_nr_weeks_unmedicated = sum(~isnan(trend_tremor_time_unmedicated_filled),2);
+prctile(included_nr_weeks_unmedicated,75)
+% included_nr_weeks_medicated = sum(~isnan(trend_tremor_time_medicated_filled(1:462,:)),2);
+% length(included_nr_weeks_medicated(included_nr_weeks_medicated>50))
+
+%%
+IDs_MedicatedDropout = IDs_BaselineMedicated(isnan(trend_tremor_time_medicated_filled(1:462,2)) | isnan(trend_tremor_time_medicated_filled(1:462,51)));
+IDs_UnmedicatedDropout = IDs_BaselineUnmedicated(start_week>100 & (isnan(trend_tremor_time_unmedicated_filled(:,2)) | isnan(trend_tremor_time_unmedicated_filled(:,51))));
+
+%% Load clinical data
+% De Novo data:
+Visit1DeNovo = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\Visit1_DeNovo.csv");
+Visit2DeNovo = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\Visit2_DeNovo.csv");
+Visit3DeNovo = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\Visit3_DeNovo.csv");
+
+% PPP data:
+Visit1PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit1.csv");
+Visit2PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit2.csv");
+Visit3PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit3.csv");
 
 % Convert IDs of PPP to same format
 ids = char(Visit1PPP.id);
@@ -52,7 +78,7 @@ UPDRS_317ON_3 = [];
 UPDRS_318ON_3 = [];
 UPDRS_210_3 = [];
 
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\visit_week_numbers.mat') % load visit week numbers
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\visit_week_numbers.mat') % load visit week numbers
 
 for i = 1:length(IDs_BaselineMedicated)
     id = IDs_BaselineMedicated{i};
@@ -262,7 +288,7 @@ end
 
 %% Determine SRM of UPDRS scores
 
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IPCW.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IPCW.mat')
 
 weighted_SRM_function = @(change, weights) ...
     (sum(weights .* change, 'omitnan') / sum(weights, 'omitnan')) / ...
@@ -368,8 +394,8 @@ hold off;
 %% Compare SRMs of sensor-derived measures with SRMs of UPDRS scores
 
 % Select participants 
-IDs_BaselineMedicated_complete = IDs_BaselineMedicated(all(~isnan(trend_tremor_time_medicated_filled(1:length(IDs_BaselineMedicated),[2 51])),2)); % Change index for one- or two-year group
-IDs_BaselineMedicated_tremor = IDs_BaselineMedicated(all(~isnan(trend_modal_tremor_power_medicated_filled(1:length(IDs_BaselineMedicated),[2 51])),2)); 
+IDs_BaselineMedicated_complete = IDs_BaselineMedicated(all(~isnan(trend_tremor_time_medicated_filled(1:length(IDs_BaselineMedicated),[2 26])),2)); % Change index for one- or two-year group
+IDs_BaselineMedicated_tremor = IDs_BaselineMedicated(all(~isnan(trend_modal_tremor_power_medicated_filled(1:length(IDs_BaselineMedicated),[2 26])),2)); 
 
 % Extract UPDRS scores baseline medicated group
 
@@ -389,11 +415,11 @@ UPDRS_317ON_3 = [];
 UPDRS_318ON_3 = [];
 UPDRS_210_3 = [];
 
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\visit_week_numbers.mat') % load visit week numbers
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\visit_week_numbers.mat') % load visit week numbers
 
 
-for i = 1:length(IDs_BaselineMedicated_complete)
-    id = IDs_BaselineMedicated_complete{i};
+for i = 1:length(IDs_BaselineMedicated_tremor)
+    id = IDs_BaselineMedicated_tremor{i};
 
     UPDRS_317OFF_1(i) = Visit1PPP.Up3OfRAmpArmYesDev(contains(Visit1PPP.id,id));
     UPDRS_318OFF_1(i) = Visit1PPP.Up3OfConstan(contains(Visit1PPP.id,id));
@@ -460,11 +486,11 @@ UPDRS_nr = 5;
 
 % Select follow-up duration and measures
 first_week_idx = 2;
-last_week_idx = 51; % week idx 26 or 51
+last_week_idx = 26; % week idx 26 or 51
 UPDRS_score_baseline = eval([UPDRS_names{UPDRS_nr} '_1']);
-UPDRS_score_followup = eval([UPDRS_names{UPDRS_nr} '_3']); % score 2 or 3
+UPDRS_score_followup = eval([UPDRS_names{UPDRS_nr} '_2']); % score 2 or 3
 
-Bootstrap_IDs = IDs_BaselineMedicated_complete(~isnan(UPDRS_score_followup) & ~isnan(UPDRS_score_baseline)); % or change to IDs_BaselineMedicated_complete
+Bootstrap_IDs = IDs_BaselineMedicated_tremor(~isnan(UPDRS_score_followup) & ~isnan(UPDRS_score_baseline)); % or change to IDs_BaselineMedicated_complete
 idx = contains([IDs_BaselineMedicated; IDs_BaselineUnmedicated],Bootstrap_IDs);
 sensor_data = eval(sensor_names{sensor_nr});
 change_sensor = sensor_data(idx,last_week_idx) - sensor_data(idx,first_week_idx);
@@ -480,8 +506,8 @@ N = length(change_sensor)
 
 %% Extract UPDRS scores unmedicated group (no ON assessment) 
 
-IDs_BaselineUnmedicated_complete = IDs_BaselineUnmedicated(all(~isnan(trend_tremor_time_unmedicated_filled(:,[2 26])),2)); 
-IDs_BaselineUnmedicated_tremor = IDs_BaselineUnmedicated(all(~isnan(trend_modal_tremor_power_unmedicated_filled(:,[2 26])),2));
+IDs_BaselineUnmedicated_complete = IDs_BaselineUnmedicated(all(~isnan(trend_tremor_time_unmedicated_filled(:,[2 51])),2)); 
+IDs_BaselineUnmedicated_tremor = IDs_BaselineUnmedicated(all(~isnan(trend_modal_tremor_power_unmedicated_filled(:,[2 51])),2));
 
 UPDRS_317OFF_1 = [];
 UPDRS_318OFF_1 = [];
@@ -493,10 +519,10 @@ UPDRS_317OFF_3 = [];
 UPDRS_318OFF_3 = [];
 UPDRS_210_3 = [];
 
-load('C:\Users\z835211\OneDrive - Radboudumc\MATLAB\Tremor progression\Paper\20250327_inclusion_exclusion\visit_week_numbers.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\visit_week_numbers.mat')
 
-for i = 1:length(IDs_BaselineUnmedicated_complete)
-    id = IDs_BaselineUnmedicated_complete{i};
+for i = 1:length(IDs_BaselineUnmedicated_tremor)
+    id = IDs_BaselineUnmedicated_tremor{i};
 
     if ~isempty(find(contains(Visit1PPP.id,id)))
 
@@ -598,22 +624,22 @@ UPDRS_names = {'UPDRS_317OFF','UPDRS_318OFF','UPDRS_210'};
 
 % Select measures
 sensor_nr = 1; 
-UPDRS_nr = 3;
+UPDRS_nr = 2;
 
 % Select follow-up duration and measures
 first_week_idx = 2;
-last_week_idx = 26; % week idx 26 or 51
+last_week_idx = 51; % week idx 26 or 51
 UPDRS_score_baseline = eval([UPDRS_names{UPDRS_nr} '_1']);
-UPDRS_score_followup = eval([UPDRS_names{UPDRS_nr} '_2']); % score 2 or 3
+UPDRS_score_followup = eval([UPDRS_names{UPDRS_nr} '_3']); % score 2 or 3
 
-Bootstrap_IDs = IDs_BaselineUnmedicated_complete(~isnan(UPDRS_score_followup) & ~isnan(UPDRS_score_baseline)); % or change to IDs_BaselineMedicated_complete
+Bootstrap_IDs = IDs_BaselineUnmedicated_tremor(~isnan(UPDRS_score_followup) & ~isnan(UPDRS_score_baseline)); % or change to IDs_BaselineMedicated_complete
 idx = contains(IDs_BaselineUnmedicated,Bootstrap_IDs);
 sensor_data = eval(sensor_names{sensor_nr});
 change_sensor = sensor_data(idx,last_week_idx) - sensor_data(idx,first_week_idx);
 change_UPDRS = UPDRS_score_followup - UPDRS_score_baseline;
 change_UPDRS = change_UPDRS(~isnan(change_UPDRS));
 
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IPCW.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IPCW.mat')
 weights = IPCW(:,2:end).Variables;
 weights = [ones(78,3) weights]; % The weights start at week 6, so add 3 columns of ones
 weights(:,51) = weights(:,50); % The weights don't change between week 98 and 100, duplicate to increase availability of weights

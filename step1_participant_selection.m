@@ -11,14 +11,14 @@ clear all; close all;
 %% Load clinical data
 
 % De Novo data:
-Visit1DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit1_DeNovo.csv");
-Visit2DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit2_DeNovo.csv");
-Visit3DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit3_DeNovo.csv");
+Visit1DeNovo = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\Visit1_DeNovo.csv");
+Visit2DeNovo = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\Visit2_DeNovo.csv");
+Visit3DeNovo = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\Visit3_DeNovo.csv");
 
 % PPP data:
-Visit1PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit1.csv");
-Visit2PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit2.csv");
-Visit3PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit3.csv");
+Visit1PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit1.csv");
+Visit2PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit2.csv");
+Visit3PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit3.csv");
 
 % Convert IDs of PPP to same format
 ids = char(Visit1PPP.id);
@@ -96,9 +96,9 @@ for i = 1:length(Inclusion.ID)
     for k = 1:length(weeks)
         week = weeks(k);
         if contains(Inclusion.Group(i),{'PPP'})
-            file = ['C:\Users\z835211\Documents\Data\PPP\aggregated_output_191125\ppp\' num2str(week) '\' id '\' filename];
+            file = ['\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\aggregated_output_ppp\ppp\' num2str(week) '\' id '\' filename];
         else
-            file = ['C:\Users\z835211\Documents\Data\DeNovo\aggregated_output_201125\denovo\' num2str(week) '\' id '\' filename];
+            file = ['\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\aggregated_output_denovo\denovo\' num2str(week) '\' id '\' filename];
         end
         if isfile(file)
             Tremor_aggregates = loadjson(file);
@@ -192,7 +192,7 @@ Inclusion.StartWeek(ismember(Inclusion.ID,'POMU8A79BAF84EA7AAA9')) = 61;
 Inclusion.StartWeek(ismember(Inclusion.ID,'POMU947ACDE0DB8BD887')) = 103;
 
 % For De Novo (start week was extracted from PEP column DeNovo.MedicationStartSinceVisit1):
-start_week_denovo = readtable('C:\Users\z835211\Documents\Data\DeNovo\start_week_denovo.csv');
+start_week_denovo = readtable('\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\start_week_denovo.csv');
 
 for i = size(Visit1PPP,1)+1:size(Inclusion,1)
     id = Inclusion.ID(i);
@@ -219,5 +219,5 @@ IDs_BaselineUnmedicated = Inclusion.ID(Inclusion.PDDiagnosis==1 & Inclusion.Same
 
 %% Save IDs and inclusion table
 
-save('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat',"IDs_BaselineUnmedicated", "IDs_BaselineMedicated")
-save('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Inclusion.mat',"Inclusion")
+save('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IDs_selected.mat',"IDs_BaselineUnmedicated", "IDs_BaselineMedicated")
+save('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Inclusion.mat',"Inclusion")

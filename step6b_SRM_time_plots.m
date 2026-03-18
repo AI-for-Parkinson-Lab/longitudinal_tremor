@@ -5,8 +5,8 @@
 clear all; close all;
 
 %% Load sensor data and IDs
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_filled.mat')
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat'); 
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Trends_filled.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IDs_selected.mat'); 
 
 %% Select two-year unmedicated participants (with tremor)
 IDs_BaselineUnmedicated_complete = IDs_BaselineUnmedicated(all(~isnan(trend_tremor_time_unmedicated_filled(:,[2 51])),2));
@@ -18,7 +18,7 @@ weighted_SRM_function = @(change, weights) ...
     (sum(weights .* change, 'omitnan') / sum(weights, 'omitnan')) / ...
     sqrt(sum(weights .* (change - (sum(weights .* change, 'omitnan') / sum(weights, 'omitnan'))).^2, 'omitnan') / sum(weights, 'omitnan'));
 
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IPCW.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IPCW.mat')
 weights = IPCW(:,2:end).Variables;
 weights = [ones(78,3) weights]; % The weights start at week 6, so add 3 columns of ones
 weights(:,51) = weights(:,50); % The weights don't change between week 98 and 100, duplicate to increase availability of weights
@@ -65,7 +65,7 @@ title('Unmedicated tremor group')
 %% Load raw weekly sensor data
 
 addpath(genpath('utils\jsonlab'))
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Inclusion.mat');
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Inclusion.mat');
 
 filename = 'Tremor_aggregates.json';
 weeks = 0:2:104;
@@ -78,9 +78,9 @@ for i = 1:length(IDs_BaselineUnmedicated)
     for k = 1:length(weeks)
         week = weeks(k);
         if contains(Inclusion.Group(ismember(Inclusion.ID,id)),{'PPP'})
-            file = ['C:\Users\z835211\Documents\Data\PPP\aggregated_output_191125\ppp\' num2str(week) '\' id '\' filename];
+            file = ['\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\aggregated_output_ppp\ppp\' num2str(week) '\' id '\' filename];
         else
-            file = ['C:\Users\z835211\Documents\Data\DeNovo\aggregated_output_201125\denovo\' num2str(week) '\' id '\' filename];
+            file = ['\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\aggregated_output_denovo\denovo\' num2str(week) '\' id '\' filename];
         end
         if isfile(file)
             Tremor_aggregates = loadjson(file);

@@ -4,8 +4,8 @@
 
 clear all; close all;
 
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat'); % load selected IDs
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Inclusion.mat'); % load inclusion table (for start week data)
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IDs_selected.mat'); % load selected IDs
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Inclusion.mat'); % load inclusion table (for start week data)
 start_week = Inclusion.StartWeek(ismember(Inclusion.ID,IDs_BaselineUnmedicated));
 start_week(mod(start_week,2)>0) = start_week(mod(start_week,2)>0) + 1; % Change odd start week number to even start week number
 
@@ -24,9 +24,9 @@ for i = 1:length(IDs_included)
     for k = 1:length(weeks)
         week = weeks(k);
         if contains(Inclusion.Group(ismember(Inclusion.ID,id)),{'PPP'})
-            file = ['C:\Users\z835211\Documents\Data\PPP\aggregated_output_191125\ppp\' num2str(week) '\' id '\' filename];
+            file = ['\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\aggregated_output_ppp\ppp\' num2str(week) '\' id '\' filename];
         else
-            file = ['C:\Users\z835211\Documents\Data\DeNovo\aggregated_output_201125\denovo\' num2str(week) '\' id '\' filename];
+            file = ['\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\aggregated_output_denovo\denovo\' num2str(week) '\' id '\' filename];
         end
         if isfile(file)
             Tremor_aggregates = loadjson(file);
@@ -159,9 +159,9 @@ IQR_var_signal_umedicated = [prctile(var_signal_unmedicated./(var_signal_unmedic
 
 %% Perform interpolation and extrapolation
 
-%load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_tremor_time')
-%load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_modal_tremor_power')
-%load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_perc90_tremor_power')
+%load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Trends_tremor_time')
+%load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Trends_modal_tremor_power')
+%load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Trends_perc90_tremor_power')
 
 measures_trend = {
     trend_tremor_time_unmedicated, ...
@@ -244,10 +244,10 @@ trend_perc90_tremor_power_medicated_filled   = measures_filled{6};
 
 %% Individual figures
 week_vector = 0:2:104;
-% load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_filled.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Trends_filled.mat')
 
 %% Increasing pattern in an unmedicated participant
-close all;
+% close all;
 C = colororder('glow12');
 figure(); hold on;
 scatter(week_vector,100*tremor_time_unmedicated(ismember(IDs_BaselineUnmedicated,'POMU1E2C8100271EA284'),:),'k','filled')
@@ -300,7 +300,7 @@ ylim([0 4])
 
 
 %% Varying pattern in a medicated participant
-close all;
+% close all;
 C = colororder('glow12');
 figure(); hold on;
 scatter(week_vector,100*tremor_time_medicated(ismember(IDs_BaselineMedicated,'POMU428FEF5AA8B909DC'),:),'k','filled')

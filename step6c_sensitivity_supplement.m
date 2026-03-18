@@ -5,9 +5,9 @@
 clear all; close all;
 
 %% Load sensor data, IDs and descriptives
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_filled.mat')
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat')
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Descriptives.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Trends_filled.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IDs_selected.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Descriptives.mat')
 
 %% Perform propensity score matching
 
@@ -44,7 +44,7 @@ end
 
 IDs_BaselineMedicated_matched = IDs_BaselineMedicated(matched_pairs(:,2))
 
-save('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_BaselineMedicated_matched.mat',"IDs_BaselineMedicated_matched")
+save('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IDs_BaselineMedicated_matched.mat',"IDs_BaselineMedicated_matched")
 
 %% Extract descriptives
 BaselineMedicated_matched = BaselineMedicated(ismember(IDs_BaselineMedicated,IDs_BaselineMedicated_matched),:);
@@ -97,13 +97,15 @@ prctile(BaselineMedicated_matched.UPDRS_devside_tremor_OFF,25)
 prctile(BaselineMedicated_matched.UPDRS_devside_tremor_OFF,75)
 
 %% Load clinical data
-Visit1DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit1_DeNovo.csv");
-Visit2DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit2_DeNovo.csv");
-Visit3DeNovo = readtable("C:\Users\z835211\Documents\Data\DeNovo\csv_files\Visit3_DeNovo.csv");
+% De Novo data:
+Visit1DeNovo = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\Visit1_DeNovo.csv");
+Visit2DeNovo = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\Visit2_DeNovo.csv");
+Visit3DeNovo = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\Visit3_DeNovo.csv");
 
-Visit1PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit1.csv");
-Visit2PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit2.csv");
-Visit3PPP = readtable("C:\Users\z835211\Documents\Data\PPP\csv_files\General_visit3.csv");
+% PPP data:
+Visit1PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit1.csv");
+Visit2PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit2.csv");
+Visit3PPP = readtable("\\umcn.nl\nas\RBS\NEURO_AI4P\Datasets\PPP_tremor\Tremor progression paper\clinical_data\General_visit3.csv");
 
 % Convert IDs of PPP to same format
 ids = char(Visit1PPP.id);
@@ -138,7 +140,7 @@ UPDRS_317ON_3 = [];
 UPDRS_318ON_3 = [];
 UPDRS_210_3 = [];
 
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\visit_week_numbers.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\visit_week_numbers.mat')
 
 for i = 1:length(IDs_BaselineMedicated_matched_tremor)
     id = IDs_BaselineMedicated_matched_tremor{i};
@@ -413,7 +415,7 @@ hold off;
 %% Extract UPDRS scores unmedicated group (no ON assessment) 
 
 IDs_BaselineUnmedicated_tremor = IDs_BaselineUnmedicated(all(~isnan(trend_modal_tremor_power_unmedicated_filled(:,[2 26])),2)); % Change index for one- or two-year group
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\visit_week_numbers.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\visit_week_numbers.mat')
 
 UPDRS_317OFF_1 = [];
 UPDRS_318OFF_1 = [];
@@ -521,7 +523,7 @@ for i = 1:length(IDs_BaselineUnmedicated_tremor)
 end
 %% Determine SRM of UPDRS scores (weighted)
 
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IPCW.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IPCW.mat')
 
 weighted_SRM_function = @(change, weights) ...
     (sum(weights .* change, 'omitnan') / sum(weights, 'omitnan')) / ...

@@ -7,9 +7,9 @@
 clear all, close all;
 
 %% Load sensor data and IDs
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Trends_filled.mat')
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IDs_selected.mat'); 
-load('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Inclusion.mat');
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Trends_filled.mat')
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IDs_selected.mat'); 
+load('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Inclusion.mat');
 start_week = Inclusion.StartWeek(ismember(Inclusion.ID,IDs_BaselineUnmedicated));
 
 %% Calculate moving average of 4 weeks with different lags
@@ -54,12 +54,12 @@ for i = 1:numSubjects
 end
 
 %% Save data table for analysis in R
-writetable(dataTable,'C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\Cox_data_table.csv')
+writetable(dataTable,'\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\Cox_data_table.csv')
 
 %% Load and modify survival probabilities from R
-opts = detectImportOptions('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\survival_probabilities.csv');
+opts = detectImportOptions('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\survival_probabilities.csv');
 opts = setvartype(opts,"double");
-survival_probabilities = readtable('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\survival_probabilities.csv',opts);
+survival_probabilities = readtable('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\survival_probabilities.csv',opts);
 
 % For one subject there is a shift in survival probabilities due to missing
 % data:
@@ -82,4 +82,4 @@ Survival.ID = IDs_BaselineUnmedicated;
 %% Compute the weights for IPCW
 IPCW = Survival;
 IPCW(:,2:end) = 1./IPCW(:,2:end);
-save('C:\Users\z835211\OneDrive - Radboudumc\Documents\Tremor progression paper\Matlab_results\IPCW',"IPCW")
+save('\\umcn.nl\nas\RBS\NEURO_AI4P\Users\Nienke Timmermans\Tremor progression\Derived_data\IPCW',"IPCW")
