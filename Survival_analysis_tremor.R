@@ -8,7 +8,7 @@ library(dplyr)
 library(tidyr)
 
 # Create dataframe
-start_medication = read.csv("C:\\Users\\z835211\\OneDrive - Radboudumc\\Documents\\Tremor progression paper\\Matlab_results\\Cox_data_table.csv")
+start_medication = read.csv("\\umcn.nl\\nas\\RBS\\NEURO_AI4P\\Users\\Nienke Timmermans\\Tremor progression\\Derived_data\\Cox_data_table.csv")
 start_medication$ID <- as.factor(start_medication$ID)
 start_medication$t_start <- start_medication$Time
 start_medication$Time <- NULL
@@ -44,4 +44,4 @@ df_wide <- surv_probabilities %>%
     names_prefix = "time_"
   )
 
-write.csv(df_wide, "C:\\Users\\z835211\\OneDrive - Radboudumc\\Documents\\Tremor progression paper\\Matlab_results\\survival_probabilities.csv")
+write.csv(df_wide, "\\umcn.nl\\nas\\RBS\\NEURO_AI4P\\Users\\Nienke Timmermans\\Tremor progression\\Derived_data\\survival_probabilities.csv")
