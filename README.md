@@ -1,5 +1,5 @@
 # Longitudinal tremor
-This repository contains code related to the scientific publication: <b>'Daily-life, sensor-derived tremor measures are sensitive to progression in early Parkinson's disease', which can be found here: http://doi.org/10.1002/ana.78236 </b>.
+This repository contains code related to the scientific publication: <b>'Daily-life, sensor-derived tremor measures are sensitive to progression in early Parkinson's disease'</b>, which can be found here: http://doi.org/10.1002/ana.78236 .
 
 ## Overview
 The repository contains code to transform weekly tremor measures into results presented in the scientific publication. The Matlab scripts are enumerated to ensure proper serial execution
