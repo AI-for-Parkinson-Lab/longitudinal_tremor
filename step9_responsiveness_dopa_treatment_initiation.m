@@ -39,6 +39,7 @@ perc90_tremor_power_before = [];
 perc90_tremor_power_after = [];
 
 IDs_StartMedication_include(ismember(IDs_StartMedication_include,'POMUFA059F3469A27DF4')) = []; % participant is using anticholinergic medication
+StartWeek_include(ismember(IDs_StartMedication_include,'POMUFA059F3469A27DF4')) = [];
 
 for i = 1:length(IDs_StartMedication_include)
     
