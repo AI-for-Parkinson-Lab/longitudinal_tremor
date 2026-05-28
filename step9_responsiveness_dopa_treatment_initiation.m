@@ -22,6 +22,11 @@ IDs_StartMedication_include = IDs_BaselineUnmedicated(include_idx);
 StartWeek_include = start_week(ismember(IDs_BaselineUnmedicated,IDs_StartMedication_include));
 StartWeek_include(mod(StartWeek_include,2)>0) = StartWeek_include(mod(StartWeek_include,2)>0) + 1;
 
+% Exclude participant that started anticholinergic medication
+StartWeek_include(ismember(IDs_StartMedication_include,'POMUFA059F3469A27DF4')) = [];
+include_idx(ismember(IDs_StartMedication_include,'POMUFA059F3469A27DF4')) = []; 
+IDs_StartMedication_include(ismember(IDs_StartMedication_include,'POMUFA059F3469A27DF4')) = []; 
+
 tremor_time_before_start = tremor_time_before_start(include_idx,:);
 tremor_time_after_start = tremor_time_after_start(include_idx,:);
 modal_tremor_power_before_start = modal_tremor_power_before_start(include_idx,:);
@@ -37,9 +42,6 @@ modal_tremor_power_before = [];
 modal_tremor_power_after = [];
 perc90_tremor_power_before = [];
 perc90_tremor_power_after = [];
-
-StartWeek_include(ismember(IDs_StartMedication_include,'POMUFA059F3469A27DF4')) = []; % participant is using anticholinergic medication
-IDs_StartMedication_include(ismember(IDs_StartMedication_include,'POMUFA059F3469A27DF4')) = []
 
 for i = 1:length(IDs_StartMedication_include)
     
