@@ -661,3 +661,37 @@ xlabel('Weeks since baseline');
 ylabel('Number of participants in medicated group');
 ylim([0 500])
 xlim([0 100])
+
+%% Perform propensity score matching
+untreated = [zeros(1,length(IDs_BaselineMedicated)) ones(1,length(IDs_BaselineUnmedicated))]';
+X  = [BaselineMedicated(:,{'Age','Disease_duration','Most_affected'}).Variables; BaselineUnmedicated(:,{'Age','Disease_duration','Most_affected'}).Variables];
+
+% Step 1: Estimate propensity scores using logistic regression
+mdl = fitglm(X, untreated, 'Distribution', 'binomial');
+propensity_scores = predict(mdl, X);
+
+% Step 2: Nearest neighbor matching (1:1 without replacement)
+unmedicated_idx = find(untreated == 1);
+medicated_idx = find(untreated == 0);
+
+matched_pairs = [];
+used_medicated = false(length(medicated_idx), 1);
+
+for i = 1:length(unmedicated_idx)
+    t_idx = unmedicated_idx(i);
+    ps_untreated = propensity_scores(t_idx);
+    
+    % Get available controls
+    available_medicated = find(~used_medicated);
+    ps_medicated = propensity_scores(medicated_idx(available_medicated));
+    
+    % Find nearest neighbor
+    [~, min_idx] = min(abs(ps_medicated - ps_untreated));
+    c_idx = medicated_idx(available_medicated(min_idx));
+    
+    % Store match
+    matched_pairs = [matched_pairs; t_idx, c_idx];
+    used_medicated(available_medicated(min_idx)) = true;
+end
+
+IDs_BaselineMedicated_matched = IDs_BaselineMedicated(matched_pairs(:,2))
